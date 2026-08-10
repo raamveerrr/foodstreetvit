@@ -19,9 +19,17 @@ export function FoodCard({
       transition={{ duration: 0.25, delay: index * 0.04 }}
       className="w-[160px] shrink-0"
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => onOpen?.(item)}
-        className="block w-full text-left"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen?.(item);
+          }
+        }}
+        className="block w-full cursor-pointer text-left"
         aria-label={`View ${item.name}`}
       >
         <div className="relative">
@@ -41,7 +49,7 @@ export function FoodCard({
           <span className="text-sm font-bold">{formatPrice(item.price)}</span>
           <AddToCartButton item={item} />
         </div>
-      </button>
+      </div>
     </motion.article>
   );
 }
@@ -64,9 +72,17 @@ export function FoodRow({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, delay: index * 0.03 }}
     >
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => onOpen?.(item)}
-        className="flex w-full gap-3 rounded-2xl bg-card p-3 text-left shadow-card active:scale-[0.99] transition-transform"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen?.(item);
+          }
+        }}
+        className="flex w-full cursor-pointer gap-3 rounded-2xl bg-card p-3 text-left shadow-card active:scale-[0.99] transition-transform"
         aria-label={`View ${item.name}`}
       >
         <div className="relative shrink-0">
@@ -96,7 +112,7 @@ export function FoodRow({
             )}
           </div>
         </div>
-      </button>
+      </div>
     </motion.article>
   );
 }
