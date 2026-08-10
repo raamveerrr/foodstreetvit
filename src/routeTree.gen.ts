@@ -13,6 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FavouritesRouteImport } from './routes/favourites'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OrderReceiptIdRouteImport } from './routes/order.$receiptId'
+import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
+import { Route as ReceiptsReceiptIdRouteImport } from './routes/receipts.$receiptId'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +39,26 @@ const FavouritesRoute = FavouritesRouteImport.update({
   path: '/favourites',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderReceiptIdRoute = OrderReceiptIdRouteImport.update({
+  id: '/order/$receiptId',
+  path: '/order/$receiptId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReceiptsIndexRoute = ReceiptsIndexRouteImport.update({
+  id: '/receipts/',
+  path: '/receipts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReceiptsReceiptIdRoute = ReceiptsReceiptIdRouteImport.update({
+  id: '/receipts/$receiptId',
+  path: '/receipts/$receiptId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopShopIdRoute = ShopShopIdRouteImport.update({
   id: '/shop/$shopId',
   path: '/shop/$shopId',
@@ -46,14 +70,22 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favourites': typeof FavouritesRoute
+  '/profile': typeof ProfileRoute
+  '/order/$receiptId': typeof OrderReceiptIdRoute
+  '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/receipts/': typeof ReceiptsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favourites': typeof FavouritesRoute
+  '/profile': typeof ProfileRoute
+  '/order/$receiptId': typeof OrderReceiptIdRoute
+  '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/receipts': typeof ReceiptsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,14 +93,46 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favourites': typeof FavouritesRoute
+  '/profile': typeof ProfileRoute
+  '/order/$receiptId': typeof OrderReceiptIdRoute
+  '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/receipts/': typeof ReceiptsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cart' | '/checkout' | '/favourites' | '/shop/$shopId'
+  fullPaths:
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/favourites'
+    | '/profile'
+    | '/order/$receiptId'
+    | '/receipts/$receiptId'
+    | '/shop/$shopId'
+    | '/receipts/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cart' | '/checkout' | '/favourites' | '/shop/$shopId'
-  id: '__root__' | '/' | '/cart' | '/checkout' | '/favourites' | '/shop/$shopId'
+  to:
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/favourites'
+    | '/profile'
+    | '/order/$receiptId'
+    | '/receipts/$receiptId'
+    | '/shop/$shopId'
+    | '/receipts'
+  id:
+    | '__root__'
+    | '/'
+    | '/cart'
+    | '/checkout'
+    | '/favourites'
+    | '/profile'
+    | '/order/$receiptId'
+    | '/receipts/$receiptId'
+    | '/shop/$shopId'
+    | '/receipts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,7 +140,11 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FavouritesRoute: typeof FavouritesRoute
+  ProfileRoute: typeof ProfileRoute
+  OrderReceiptIdRoute: typeof OrderReceiptIdRoute
+  ReceiptsReceiptIdRoute: typeof ReceiptsReceiptIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
+  ReceiptsIndexRoute: typeof ReceiptsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,6 +177,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavouritesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order/$receiptId': {
+      id: '/order/$receiptId'
+      path: '/order/$receiptId'
+      fullPath: '/order/$receiptId'
+      preLoaderRoute: typeof OrderReceiptIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/receipts/': {
+      id: '/receipts/'
+      path: '/receipts'
+      fullPath: '/receipts/'
+      preLoaderRoute: typeof ReceiptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/receipts/$receiptId': {
+      id: '/receipts/$receiptId'
+      path: '/receipts/$receiptId'
+      fullPath: '/receipts/$receiptId'
+      preLoaderRoute: typeof ReceiptsReceiptIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/$shopId': {
       id: '/shop/$shopId'
       path: '/shop/$shopId'
@@ -124,7 +220,11 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FavouritesRoute: FavouritesRoute,
+  ProfileRoute: ProfileRoute,
+  OrderReceiptIdRoute: OrderReceiptIdRoute,
+  ReceiptsReceiptIdRoute: ReceiptsReceiptIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
+  ReceiptsIndexRoute: ReceiptsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
