@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
-export function BackBar({ title }: { title?: string }) {
+export function BackBar({ title }: { title?: string | undefined }) {
   return (
     <div className="flex items-center gap-3 px-5 pt-6">
       <Link

@@ -55,8 +55,8 @@ export function PageHeader({
   action,
 }: {
   title: string;
-  subtitle?: string;
-  action?: React.ReactNode;
+  subtitle?: string | undefined;
+  action?: React.ReactNode | undefined;
 }) {
   return (
     <header className="flex items-start justify-between gap-4 px-5 pb-1 pt-6">

@@ -52,9 +52,9 @@ export function EmptyState({
 }: {
   title: string;
   description: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  icon?: React.ReactNode;
+  actionLabel?: string | undefined;
+  onAction?: (() => void) | undefined;
+  icon?: React.ReactNode | undefined;
 }) {
   return (
     <div className="flex flex-col items-center px-8 py-16 text-center">
