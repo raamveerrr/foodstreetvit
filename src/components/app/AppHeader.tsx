@@ -34,7 +34,7 @@ export function AppHeader({
     <header className="flex items-start justify-between gap-4 px-5 pt-6">
       <div className="min-w-0">
         <p className="text-sm text-muted-foreground">{greeting}</p>
-        <h1 className="mt-0.5 truncate text-2xl font-bold tracking-tight">{subtitle}</h1>
+        <h1 className="mt-0.5 text-[22px] font-bold leading-tight tracking-tight">{subtitle}</h1>
       </div>
       <motion.div whileTap={{ scale: 0.92 }}>
         <Link
