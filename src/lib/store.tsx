@@ -136,16 +136,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const discount = subtotal > 0 ? Math.round(subtotal * DISCOUNT_RATE) : 0;
   const total = subtotal - discount;
 
-  const cartShop = cartItems[0]
-    ? SHOPS.find((s) => s.id === cartItems[0].item.shopId) ?? null
+  const firstCartItem = cartItems[0];
+  const cartShop = firstCartItem
+    ? SHOPS.find((s) => s.id === firstCartItem.item.shopId) ?? null
     : null;
 
   const addToCart = useCallback(
     (item: FoodItem, qty = 1) => {
       setState((prev) => {
-        const existingShopId = prev.cart[0]
-          ? FOODS.find((f) => f.id === prev.cart[0].itemId)?.shopId
+        const firstLine = prev.cart[0];
+        const existingShopId = firstLine
+          ? FOODS.find((f) => f.id === firstLine.itemId)?.shopId
           : undefined;
+
         const differentShop = existingShopId && existingShopId !== item.shopId;
         const base = differentShop ? [] : prev.cart;
         if (differentShop) {
