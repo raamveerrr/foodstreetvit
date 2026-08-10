@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "DigitalFoodStreet — Pre-order campus food" },
       {
         property: "og:description",
-        content: "Order from campus shops and collect with a digital receipt.",
+        content: "Pre-order food from campus shops, pay online and collect with a digital receipt. Fast, simple, no queues.",
       },
     ],
   }),
