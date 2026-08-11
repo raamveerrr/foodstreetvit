@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { CategorySelector, SearchBar, SectionTitle } from "@/components/app/CategorySelector";
@@ -48,6 +48,10 @@ function HomePage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [selected, setSelected] = useState<FoodItem | null>(null);
+  // Computed after mount: the server clock and the student's clock can differ.
+  const [greeting, setGreeting] = useState("Hello");
+  useEffect(() => setGreeting(greetingFor()), []);
+
 
   const shops = getShops();
   const popular = getPopularFoods();
@@ -67,7 +71,7 @@ function HomePage() {
   return (
     <div className="pb-4">
       <AppHeader
-        greeting={`${greetingFor()}, ${user.name} 👋`}
+        greeting={`${greeting}, ${user.name} 👋`}
         subtitle="What are you craving today?"
         initials={user.initials}
       />
