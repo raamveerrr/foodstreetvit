@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AppHeader } from "@/components/app/AppHeader";
 import { CategorySelector, SearchBar, SectionTitle } from "@/components/app/CategorySelector";
