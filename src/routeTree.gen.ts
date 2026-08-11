@@ -12,12 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CreateShopRouteImport } from './routes/create-shop'
 import { Route as FavouritesRouteImport } from './routes/favourites'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ShopLoginRouteImport } from './routes/shop-login'
 import { Route as OrderReceiptIdRouteImport } from './routes/order.$receiptId'
 import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
 import { Route as ReceiptsReceiptIdRouteImport } from './routes/receipts.$receiptId'
+import { Route as ShopIndexRouteImport } from './routes/shop.index'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
+import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,6 +38,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CreateShopRoute = CreateShopRouteImport.update({
+  id: '/create-shop',
+  path: '/create-shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FavouritesRoute = FavouritesRouteImport.update({
   id: '/favourites',
   path: '/favourites',
@@ -42,6 +51,11 @@ const FavouritesRoute = FavouritesRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopLoginRoute = ShopLoginRouteImport.update({
+  id: '/shop-login',
+  path: '/shop-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderReceiptIdRoute = OrderReceiptIdRouteImport.update({
@@ -59,9 +73,19 @@ const ReceiptsReceiptIdRoute = ReceiptsReceiptIdRouteImport.update({
   path: '/receipts/$receiptId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/shop/',
+  path: '/shop/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopShopIdRoute = ShopShopIdRouteImport.update({
   id: '/shop/$shopId',
   path: '/shop/$shopId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopOrdersRoute = ShopOrdersRouteImport.update({
+  id: '/shop/orders',
+  path: '/shop/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -69,35 +93,47 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
   '/profile': typeof ProfileRoute
+  '/shop-login': typeof ShopLoginRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/orders': typeof ShopOrdersRoute
   '/receipts/': typeof ReceiptsIndexRoute
+  '/shop/': typeof ShopIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
   '/profile': typeof ProfileRoute
+  '/shop-login': typeof ShopLoginRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/orders': typeof ShopOrdersRoute
   '/receipts': typeof ReceiptsIndexRoute
+  '/shop': typeof ShopIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
   '/profile': typeof ProfileRoute
+  '/shop-login': typeof ShopLoginRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/orders': typeof ShopOrdersRoute
   '/receipts/': typeof ReceiptsIndexRoute
+  '/shop/': typeof ShopIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,46 +141,62 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/checkout'
+    | '/create-shop'
     | '/favourites'
     | '/profile'
+    | '/shop-login'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/orders'
     | '/receipts/'
+    | '/shop/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
     | '/checkout'
+    | '/create-shop'
     | '/favourites'
     | '/profile'
+    | '/shop-login'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/orders'
     | '/receipts'
+    | '/shop'
   id:
     | '__root__'
     | '/'
     | '/cart'
     | '/checkout'
+    | '/create-shop'
     | '/favourites'
     | '/profile'
+    | '/shop-login'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/orders'
     | '/receipts/'
+    | '/shop/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  CreateShopRoute: typeof CreateShopRoute
   FavouritesRoute: typeof FavouritesRoute
   ProfileRoute: typeof ProfileRoute
+  ShopLoginRoute: typeof ShopLoginRoute
   OrderReceiptIdRoute: typeof OrderReceiptIdRoute
   ReceiptsReceiptIdRoute: typeof ReceiptsReceiptIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
+  ShopOrdersRoute: typeof ShopOrdersRoute
   ReceiptsIndexRoute: typeof ReceiptsIndexRoute
+  ShopIndexRoute: typeof ShopIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/create-shop': {
+      id: '/create-shop'
+      path: '/create-shop'
+      fullPath: '/create-shop'
+      preLoaderRoute: typeof CreateShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/favourites': {
       id: '/favourites'
       path: '/favourites'
@@ -182,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop-login': {
+      id: '/shop-login'
+      path: '/shop-login'
+      fullPath: '/shop-login'
+      preLoaderRoute: typeof ShopLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order/$receiptId': {
@@ -205,11 +271,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReceiptsReceiptIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/': {
+      id: '/shop/'
+      path: '/shop'
+      fullPath: '/shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/$shopId': {
       id: '/shop/$shopId'
       path: '/shop/$shopId'
       fullPath: '/shop/$shopId'
       preLoaderRoute: typeof ShopShopIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/orders': {
+      id: '/shop/orders'
+      path: '/shop/orders'
+      fullPath: '/shop/orders'
+      preLoaderRoute: typeof ShopOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -219,23 +299,17 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  CreateShopRoute: CreateShopRoute,
   FavouritesRoute: FavouritesRoute,
   ProfileRoute: ProfileRoute,
+  ShopLoginRoute: ShopLoginRoute,
   OrderReceiptIdRoute: OrderReceiptIdRoute,
   ReceiptsReceiptIdRoute: ReceiptsReceiptIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
+  ShopOrdersRoute: ShopOrdersRoute,
   ReceiptsIndexRoute: ReceiptsIndexRoute,
+  ShopIndexRoute: ShopIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
