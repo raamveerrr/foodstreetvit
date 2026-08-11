@@ -21,6 +21,9 @@ import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
 import { Route as ReceiptsReceiptIdRouteImport } from './routes/receipts.$receiptId'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
+import { Route as ShopAnalyticsRouteImport } from './routes/shop.analytics'
+import { Route as ShopCustomersRouteImport } from './routes/shop.customers'
+import { Route as ShopMenuRouteImport } from './routes/shop.menu'
 import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
 
 const IndexRoute = IndexRouteImport.update({
@@ -83,6 +86,21 @@ const ShopShopIdRoute = ShopShopIdRouteImport.update({
   path: '/shop/$shopId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopAnalyticsRoute = ShopAnalyticsRouteImport.update({
+  id: '/shop/analytics',
+  path: '/shop/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopCustomersRoute = ShopCustomersRouteImport.update({
+  id: '/shop/customers',
+  path: '/shop/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopMenuRoute = ShopMenuRouteImport.update({
+  id: '/shop/menu',
+  path: '/shop/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopOrdersRoute = ShopOrdersRouteImport.update({
   id: '/shop/orders',
   path: '/shop/orders',
@@ -100,6 +118,9 @@ export interface FileRoutesByFullPath {
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/customers': typeof ShopCustomersRoute
+  '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
@@ -115,6 +136,9 @@ export interface FileRoutesByTo {
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/customers': typeof ShopCustomersRoute
+  '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/receipts': typeof ReceiptsIndexRoute
   '/shop': typeof ShopIndexRoute
@@ -131,6 +155,9 @@ export interface FileRoutesById {
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
+  '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/customers': typeof ShopCustomersRoute
+  '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
@@ -148,6 +175,9 @@ export interface FileRouteTypes {
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/analytics'
+    | '/shop/customers'
+    | '/shop/menu'
     | '/shop/orders'
     | '/receipts/'
     | '/shop/'
@@ -163,6 +193,9 @@ export interface FileRouteTypes {
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/analytics'
+    | '/shop/customers'
+    | '/shop/menu'
     | '/shop/orders'
     | '/receipts'
     | '/shop'
@@ -178,6 +211,9 @@ export interface FileRouteTypes {
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
+    | '/shop/analytics'
+    | '/shop/customers'
+    | '/shop/menu'
     | '/shop/orders'
     | '/receipts/'
     | '/shop/'
@@ -194,6 +230,9 @@ export interface RootRouteChildren {
   OrderReceiptIdRoute: typeof OrderReceiptIdRoute
   ReceiptsReceiptIdRoute: typeof ReceiptsReceiptIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
+  ShopAnalyticsRoute: typeof ShopAnalyticsRoute
+  ShopCustomersRoute: typeof ShopCustomersRoute
+  ShopMenuRoute: typeof ShopMenuRoute
   ShopOrdersRoute: typeof ShopOrdersRoute
   ReceiptsIndexRoute: typeof ReceiptsIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
@@ -285,6 +324,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopShopIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/analytics': {
+      id: '/shop/analytics'
+      path: '/shop/analytics'
+      fullPath: '/shop/analytics'
+      preLoaderRoute: typeof ShopAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/customers': {
+      id: '/shop/customers'
+      path: '/shop/customers'
+      fullPath: '/shop/customers'
+      preLoaderRoute: typeof ShopCustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/menu': {
+      id: '/shop/menu'
+      path: '/shop/menu'
+      fullPath: '/shop/menu'
+      preLoaderRoute: typeof ShopMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/orders': {
       id: '/shop/orders'
       path: '/shop/orders'
@@ -306,6 +366,9 @@ const rootRouteChildren: RootRouteChildren = {
   OrderReceiptIdRoute: OrderReceiptIdRoute,
   ReceiptsReceiptIdRoute: ReceiptsReceiptIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
+  ShopAnalyticsRoute: ShopAnalyticsRoute,
+  ShopCustomersRoute: ShopCustomersRoute,
+  ShopMenuRoute: ShopMenuRoute,
   ShopOrdersRoute: ShopOrdersRoute,
   ReceiptsIndexRoute: ReceiptsIndexRoute,
   ShopIndexRoute: ShopIndexRoute,
