@@ -71,7 +71,7 @@ function HomePage() {
   return (
     <div className="pb-4">
       <AppHeader
-        greeting={`${greetingFor()}, ${user.name} 👋`}
+        greeting={`${greeting}, ${user.name} 👋`}
         subtitle="What are you craving today?"
         initials={user.initials}
       />
