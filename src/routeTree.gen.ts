@@ -25,6 +25,8 @@ import { Route as ShopAnalyticsRouteImport } from './routes/shop.analytics'
 import { Route as ShopCustomersRouteImport } from './routes/shop.customers'
 import { Route as ShopMenuRouteImport } from './routes/shop.menu'
 import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
+import { Route as ShopPaymentsRouteImport } from './routes/shop.payments'
+import { Route as ShopSettingsRouteImport } from './routes/shop.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -106,6 +108,16 @@ const ShopOrdersRoute = ShopOrdersRouteImport.update({
   path: '/shop/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopPaymentsRoute = ShopPaymentsRouteImport.update({
+  id: '/shop/payments',
+  path: '/shop/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopSettingsRoute = ShopSettingsRouteImport.update({
+  id: '/shop/settings',
+  path: '/shop/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -122,6 +134,8 @@ export interface FileRoutesByFullPath {
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
+  '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
 }
@@ -140,6 +154,8 @@ export interface FileRoutesByTo {
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
+  '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/settings': typeof ShopSettingsRoute
   '/receipts': typeof ReceiptsIndexRoute
   '/shop': typeof ShopIndexRoute
 }
@@ -159,6 +175,8 @@ export interface FileRoutesById {
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
+  '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
 }
@@ -179,6 +197,8 @@ export interface FileRouteTypes {
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
+    | '/shop/payments'
+    | '/shop/settings'
     | '/receipts/'
     | '/shop/'
   fileRoutesByTo: FileRoutesByTo
@@ -197,6 +217,8 @@ export interface FileRouteTypes {
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
+    | '/shop/payments'
+    | '/shop/settings'
     | '/receipts'
     | '/shop'
   id:
@@ -215,6 +237,8 @@ export interface FileRouteTypes {
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
+    | '/shop/payments'
+    | '/shop/settings'
     | '/receipts/'
     | '/shop/'
   fileRoutesById: FileRoutesById
@@ -234,6 +258,8 @@ export interface RootRouteChildren {
   ShopCustomersRoute: typeof ShopCustomersRoute
   ShopMenuRoute: typeof ShopMenuRoute
   ShopOrdersRoute: typeof ShopOrdersRoute
+  ShopPaymentsRoute: typeof ShopPaymentsRoute
+  ShopSettingsRoute: typeof ShopSettingsRoute
   ReceiptsIndexRoute: typeof ReceiptsIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
 }
@@ -352,6 +378,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/payments': {
+      id: '/shop/payments'
+      path: '/shop/payments'
+      fullPath: '/shop/payments'
+      preLoaderRoute: typeof ShopPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/settings': {
+      id: '/shop/settings'
+      path: '/shop/settings'
+      fullPath: '/shop/settings'
+      preLoaderRoute: typeof ShopSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -370,6 +410,8 @@ const rootRouteChildren: RootRouteChildren = {
   ShopCustomersRoute: ShopCustomersRoute,
   ShopMenuRoute: ShopMenuRoute,
   ShopOrdersRoute: ShopOrdersRoute,
+  ShopPaymentsRoute: ShopPaymentsRoute,
+  ShopSettingsRoute: ShopSettingsRoute,
   ReceiptsIndexRoute: ReceiptsIndexRoute,
   ShopIndexRoute: ShopIndexRoute,
 }

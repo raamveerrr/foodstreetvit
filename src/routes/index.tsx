@@ -48,6 +48,10 @@ function HomePage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [selected, setSelected] = useState<FoodItem | null>(null);
+  // Computed after mount: the server clock and the student's clock can differ.
+  const [greeting, setGreeting] = useState("Hello");
+  useEffect(() => setGreeting(greetingFor()), []);
+
 
   const shops = getShops();
   const popular = getPopularFoods();
