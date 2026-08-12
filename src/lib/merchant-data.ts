@@ -1,12 +1,9 @@
-import { FOODS, SHOPS } from "./data";
-
 /**
- * Shop-owner (merchant) mock data layer.
+ * Shop-owner (merchant) view models.
  *
- * Shape mirrors the future backend model so it can be swapped 1:1 later:
- *   owner -> shops -> { menu, categories, orders, customers, payments, settings }
- * Nothing here is shared with the student store: a shop owner only ever reads
- * and writes data scoped to a shop id they own.
+ * These shapes are what the merchant UI renders. They are projections of the
+ * Firestore documents in `src/lib/firebase/types.ts`, built in `merchant-store`.
+ * A shop owner only ever reads and writes data scoped to a shop they own.
  */
 
 export type OrderStatus =
@@ -58,7 +55,9 @@ export interface MenuItem {
   description: string;
   price: number;
   category: string;
+  categoryId?: string;
   image: string;
+  imagePublicId?: string | null;
   available: boolean;
   veg: boolean;
   popular: boolean;
@@ -78,6 +77,8 @@ export interface ShopOrder {
   customerName: string;
   lines: OrderLine[];
   total: number;
+  shopAmount: number;
+  platformCommission: number;
   paid: boolean;
   status: OrderStatus;
   placedAt: string;
@@ -101,12 +102,15 @@ export interface OwnerShop {
   email: string;
   campus: string;
   logo: string | null;
+  logoPublicId?: string | null;
   cover: string | null;
+  coverPublicId?: string | null;
   prepTime: string;
   availability: ShopAvailability;
   hours: DayHours[];
   paymentConnected: boolean;
   categories: string[];
+  categoryIds: Record<string, string>;
   menu: MenuItem[];
   orders: ShopOrder[];
   customers: ShopCustomer[];
@@ -146,97 +150,6 @@ export const SHOP_CATEGORIES = [
   "Snacks and quick bites",
   "Juices and shakes",
   "Meals and thali",
-];
-
-const menuFor = (shopId: string): MenuItem[] =>
-  FOODS.filter((f) => f.shopId === shopId).map((f) => ({
-    id: f.id,
-    name: f.name,
-    description: f.description,
-    price: f.price,
-    category: f.category,
-    image: f.image,
-    available: f.available,
-    veg: !/chicken|egg|mutton/i.test(f.name),
-    popular: Boolean(f.popular),
-    ingredients: f.ingredients ?? "",
-    prepTime: "10–15 minutes",
-  }));
-
-const seedOrders = (shopId: string, menu: MenuItem[]): ShopOrder[] => {
-  const pick = (i: number) => menu[i % menu.length]!;
-  const base = Date.parse("2026-01-01T00:00:00.000Z");
-  const specs: Array<{ code: string; who: string; status: OrderStatus; idx: number[]; mins: number }> = [
-    { code: "FS-4821", who: "Ramveer S.", status: "NEW", idx: [0, 0, 2], mins: 4 },
-    { code: "FS-4820", who: "Ananya P.", status: "NEW", idx: [1, 3], mins: 9 },
-    { code: "FS-4818", who: "Kabir M.", status: "ACCEPTED", idx: [2], mins: 16 },
-    { code: "FS-4815", who: "Isha R.", status: "PREPARING", idx: [0, 1], mins: 24 },
-    { code: "FS-4811", who: "Devansh K.", status: "READY", idx: [3, 3], mins: 33 },
-    { code: "FS-4802", who: "Meera T.", status: "COMPLETED", idx: [1], mins: 68 },
-    { code: "FS-4799", who: "Aarav J.", status: "COMPLETED", idx: [0, 2], mins: 92 },
-    { code: "FS-4795", who: "Nikhil V.", status: "CANCELLED", idx: [2], mins: 140 },
-  ];
-  return specs.map((s, n) => {
-    const lines: OrderLine[] = [];
-    s.idx.forEach((i) => {
-      const item = pick(i);
-      const found = lines.find((l) => l.name === item.name);
-      if (found) found.qty += 1;
-      else lines.push({ name: item.name, qty: 1, price: item.price });
-    });
-    return {
-      id: `${shopId}_o_${n}`,
-      code: s.code,
-      customerName: s.who,
-      lines,
-      total: lines.reduce((t, l) => t + l.price * l.qty, 0),
-      paid: s.status !== "CANCELLED",
-      status: s.status,
-      placedAt: new Date(base - s.mins * 60000).toISOString(),
-    };
-  });
-};
-
-const seedCustomers = (shopId: string): ShopCustomer[] =>
-  [
-    { name: "Ramveer S.", orders: 14, spent: 2480, lastOrder: "Today" },
-    { name: "Ananya P.", orders: 9, spent: 1610, lastOrder: "Today" },
-    { name: "Kabir M.", orders: 7, spent: 1180, lastOrder: "Yesterday" },
-    { name: "Isha R.", orders: 5, spent: 860, lastOrder: "2 days ago" },
-    { name: "Devansh K.", orders: 3, spent: 495, lastOrder: "4 days ago" },
-  ].map((c, i) => ({
-    id: `${shopId}_c_${i}`,
-    initials: c.name.charAt(0),
-    ...c,
-  }));
-
-const buildShop = (shopId: string, category: string): OwnerShop => {
-  const base = SHOPS.find((s) => s.id === shopId)!;
-  const menu = menuFor(shopId);
-  return {
-    id: shopId,
-    name: base.name,
-    description: base.description,
-    category,
-    phone: "+91 98765 43210",
-    email: `${shopId}@campus.edu`,
-    campus: "Campus Food Court",
-    logo: null,
-    cover: base.image,
-    prepTime: base.prepTime.replace(" min", " minutes"),
-    availability: base.isOpen ? "open" : "closed",
-    hours: defaultHours(),
-    paymentConnected: false,
-    categories: Array.from(new Set(menu.map((m) => m.category))),
-    menu,
-    orders: seedOrders(shopId, menu),
-    customers: seedCustomers(shopId),
-  };
-};
-
-export const seedOwnerShops = (): OwnerShop[] => [
-  buildShop("zuzu", "Fast food and beverages"),
-  buildShop("cake-stories", "Bakery and desserts"),
 ];
 
 export const formatMoney = (n: number) => `₹${n.toLocaleString("en-IN")}`;

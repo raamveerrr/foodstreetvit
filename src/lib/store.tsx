@@ -7,8 +7,22 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { FOODS, MOCK_USER, SHOPS, type FoodItem, type User } from "./data";
+import { getFood, getShop, type FoodItem, type User } from "./data";
+import { useCatalog } from "./catalog-store";
+import { useAuth } from "./auth-store";
+import { getDb, isBrowser } from "./firebase/client";
+import { friendlyError } from "./firebase/errors";
+import {
+  confirmPayment,
+  createOrder,
+  subscribeStudentOrders,
+  validateCart,
+  type CartValidationIssue,
+} from "./firebase/orders";
+import { subscribeStudentReceipts, redeemReceipt } from "./firebase/receipts";
+import type { MenuItemDoc, OrderDoc, ReceiptDoc } from "./firebase/types";
 
 export interface CartLine {
   itemId: string;
@@ -37,14 +51,13 @@ export interface Receipt {
   pickedUpAt: string | null;
 }
 
-interface AppState {
+interface StoreValue {
   user: User;
+  signedIn: boolean;
   cart: CartLine[];
   favourites: string[];
   receipts: Receipt[];
-}
-
-interface StoreValue extends AppState {
+  orders: OrderDoc[];
   hydrated: boolean;
   cartCount: number;
   cartItems: { item: FoodItem; qty: number }[];
@@ -60,51 +73,49 @@ interface StoreValue extends AppState {
   isFavourite: (itemId: string) => boolean;
   toggleFavourite: (item: FoodItem) => void;
   favouriteItems: FoodItem[];
-  placeOrder: () => Receipt | null;
-  confirmPickup: (receiptId: string) => void;
-  logout: () => void;
+  /** Validates against the live menu, then places + pays for the order. */
+  placeOrder: () => Promise<{ receiptId: string } | null>;
+  cartIssues: CartValidationIssue[];
+  clearCartIssues: () => void;
+  confirmPickup: (receiptId: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-const STORAGE_KEY = "dfs.state.v1";
+const CART_KEY = "dfs.cart.v2";
+const FAV_KEY = "dfs.favourites.v2";
 const DISCOUNT_RATE = 0.05;
+
+const GUEST: User = { id: "", name: "there", email: "", initials: "G" };
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-const seedReceipts = (): Receipt[] => [
-  {
-    id: "r_seed_1",
-    code: "FS-4712",
-    shopId: "bites-and-bites",
-    shopName: "Bites & Bites",
-    counter: "Bites & Bites Counter",
-    lines: [
-      { name: "Masala Maggi", qty: 1, price: 59 },
-      { name: "Grilled Sandwich", qty: 1, price: 89 },
-    ],
-    total: 141,
-    paid: true,
-    status: "picked_up",
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    pickedUpAt: new Date(Date.now() - 86000000).toISOString(),
-  },
-];
+const tsToIso = (value: unknown): string => {
+  const t = value as { toDate?: () => Date } | null;
+  if (t && typeof t.toDate === "function") return t.toDate().toISOString();
+  return new Date().toISOString();
+};
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>({
-    user: MOCK_USER,
-    cart: [],
-    favourites: ["f_chicken_burger", "f_cold_coffee"],
-    receipts: seedReceipts(),
-  });
-  const [hydrated, setHydrated] = useState(false);
+  const { firebaseUser, profile, ready, logout: authLogout } = useAuth();
+  const { foods } = useCatalog();
 
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [favourites, setFavourites] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [orders, setOrders] = useState<OrderDoc[]>([]);
+  const [receiptDocs, setReceiptDocs] = useState<ReceiptDoc[]>([]);
+  const [cartIssues, setCartIssues] = useState<CartValidationIssue[]>([]);
+  const [placing, setPlacing] = useState(false);
+
+  const uid = firebaseUser?.uid ?? null;
+
+  // Cart stays on the device: it is a draft, not backend state.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<AppState>;
-        setState((prev) => ({ ...prev, ...parsed, user: MOCK_USER }));
-      }
+      const rawCart = localStorage.getItem(CART_KEY);
+      if (rawCart) setCart(JSON.parse(rawCart) as CartLine[]);
+      const rawFav = localStorage.getItem(FAV_KEY);
+      if (rawFav) setFavourites(JSON.parse(rawFav) as string[]);
     } catch {
       /* ignore corrupted local state */
     }
@@ -114,21 +125,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      localStorage.setItem(FAV_KEY, JSON.stringify(favourites));
     } catch {
       /* storage unavailable */
     }
-  }, [state, hydrated]);
+  }, [cart, favourites, hydrated]);
+
+  // Favourites follow the account once signed in.
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    void getDoc(doc(getDb(), "users", uid))
+      .then((snap) => {
+        const remote = (snap.data() as { favourites?: string[] } | undefined)?.favourites;
+        if (!cancelled && Array.isArray(remote) && remote.length) setFavourites(remote);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
+  // Realtime orders + receipts for this student only.
+  useEffect(() => {
+    if (!isBrowser || !uid) {
+      setOrders([]);
+      setReceiptDocs([]);
+      return;
+    }
+    const stopOrders = subscribeStudentOrders(uid, setOrders, (m) => toast.error(m));
+    const stopReceipts = subscribeStudentReceipts(uid, setReceiptDocs, (m) => toast.error(m));
+    return () => {
+      stopOrders();
+      stopReceipts();
+    };
+  }, [uid]);
 
   const cartItems = useMemo(
     () =>
-      state.cart
+      cart
         .map((line) => {
-          const item = FOODS.find((f) => f.id === line.itemId);
+          const item = foods.find((f) => f.id === line.itemId);
           return item ? { item, qty: line.qty } : null;
         })
         .filter(Boolean) as { item: FoodItem; qty: number }[],
-    [state.cart],
+    [cart, foods],
   );
 
   const cartCount = cartItems.reduce((n, l) => n + l.qty, 0);
@@ -137,30 +179,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const total = subtotal - discount;
 
   const firstCartItem = cartItems[0];
-  const cartShop = firstCartItem
-    ? SHOPS.find((s) => s.id === firstCartItem.item.shopId) ?? null
-    : null;
+  const cartShop = firstCartItem ? getShop(firstCartItem.item.shopId) ?? null : null;
 
   const addToCart = useCallback(
     (item: FoodItem, qty = 1) => {
-      setState((prev) => {
-        const firstLine = prev.cart[0];
-        const existingShopId = firstLine
-          ? FOODS.find((f) => f.id === firstLine.itemId)?.shopId
-          : undefined;
-
+      if (!item.available) {
+        toast.error(`${item.name} is unavailable right now.`);
+        return;
+      }
+      setCart((prev) => {
+        const firstLine = prev[0];
+        const existingShopId = firstLine ? getFood(firstLine.itemId)?.shopId : undefined;
         const differentShop = existingShopId && existingShopId !== item.shopId;
-        const base = differentShop ? [] : prev.cart;
+        const base = differentShop ? [] : prev;
         if (differentShop) {
-          toast("Cart updated", {
-            description: "Items from another shop were removed.",
-          });
+          toast("Cart updated", { description: "Items from another shop were removed." });
         }
         const found = base.find((l) => l.itemId === item.id);
-        const cart = found
+        return found
           ? base.map((l) => (l.itemId === item.id ? { ...l, qty: l.qty + qty } : l))
           : [...base, { itemId: item.id, qty }];
-        return { ...prev, cart };
       });
       toast.success(`${item.name} added to cart`);
     },
@@ -168,99 +206,162 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const increment = useCallback((itemId: string) => {
-    setState((prev) => ({
-      ...prev,
-      cart: prev.cart.map((l) => (l.itemId === itemId ? { ...l, qty: l.qty + 1 } : l)),
-    }));
+    setCart((prev) => prev.map((l) => (l.itemId === itemId ? { ...l, qty: l.qty + 1 } : l)));
   }, []);
 
   const decrement = useCallback((itemId: string) => {
-    setState((prev) => ({
-      ...prev,
-      cart: prev.cart
-        .map((l) => (l.itemId === itemId ? { ...l, qty: l.qty - 1 } : l))
-        .filter((l) => l.qty > 0),
-    }));
+    setCart((prev) =>
+      prev.map((l) => (l.itemId === itemId ? { ...l, qty: l.qty - 1 } : l)).filter((l) => l.qty > 0),
+    );
   }, []);
 
   const removeFromCart = useCallback((itemId: string) => {
-    const item = FOODS.find((f) => f.id === itemId);
-    setState((prev) => ({ ...prev, cart: prev.cart.filter((l) => l.itemId !== itemId) }));
+    const item = getFood(itemId);
+    setCart((prev) => prev.filter((l) => l.itemId !== itemId));
     toast(`${item?.name ?? "Item"} removed from cart`);
   }, []);
 
-  const clearCart = useCallback(() => {
-    setState((prev) => ({ ...prev, cart: [] }));
-  }, []);
+  const clearCart = useCallback(() => setCart([]), []);
 
-  const isFavourite = useCallback(
-    (itemId: string) => state.favourites.includes(itemId),
-    [state.favourites],
+  const isFavourite = useCallback((itemId: string) => favourites.includes(itemId), [favourites]);
+
+  const toggleFavourite = useCallback(
+    (item: FoodItem) => {
+      setFavourites((prev) => {
+        const has = prev.includes(item.id);
+        const next = has ? prev.filter((id) => id !== item.id) : [...prev, item.id];
+        toast(has ? "Removed from favourites" : "Added to favourites");
+        if (uid) {
+          void updateDoc(doc(getDb(), "users", uid), { favourites: next }).catch(() => undefined);
+        }
+        return next;
+      });
+    },
+    [uid],
   );
-
-  const toggleFavourite = useCallback((item: FoodItem) => {
-    setState((prev) => {
-      const has = prev.favourites.includes(item.id);
-      toast(has ? "Removed from favourites" : "Added to favourites");
-      return {
-        ...prev,
-        favourites: has
-          ? prev.favourites.filter((id) => id !== item.id)
-          : [...prev.favourites, item.id],
-      };
-    });
-  }, []);
 
   const favouriteItems = useMemo(
-    () => state.favourites.map((id) => FOODS.find((f) => f.id === id)).filter(Boolean) as FoodItem[],
-    [state.favourites],
+    () => favourites.map((id) => foods.find((f) => f.id === id)).filter(Boolean) as FoodItem[],
+    [favourites, foods],
   );
 
-  /**
-   * One order -> exactly one receipt. The receipt is created only here, on a
-   * successful order, and is never regenerated afterwards.
-   */
-  const placeOrder = useCallback((): Receipt | null => {
-    if (cartItems.length === 0 || !cartShop) return null;
-    const receipt: Receipt = {
-      id: `r_${Date.now()}`,
-      code: `FS-${Math.floor(1000 + Math.random() * 8999)}`,
-      shopId: cartShop.id,
-      shopName: cartShop.name,
-      counter: cartShop.counter,
-      lines: cartItems.map(({ item, qty }) => ({
-        name: item.name,
-        qty,
-        price: item.price,
-      })),
-      total,
-      paid: true,
-      status: "preparing",
-      createdAt: new Date().toISOString(),
-      pickedUpAt: null,
-    };
-    setState((prev) => ({ ...prev, cart: [], receipts: [receipt, ...prev.receipts] }));
-    return receipt;
-  }, [cartItems, cartShop, total]);
+  /** One order -> exactly one receipt, issued server-side after payment. */
+  const placeOrder = useCallback(async (): Promise<{ receiptId: string } | null> => {
+    if (placing) return null;
+    if (!uid || !profile) {
+      toast.error("Please sign in to place your order.");
+      return null;
+    }
+    if (cartItems.length === 0 || !cartShop) {
+      toast.error("Your cart is empty");
+      return null;
+    }
+    setPlacing(true);
+    try {
+      const check = await validateCart(
+        cartShop.id,
+        cartItems.map(({ item, qty }) => ({
+          itemId: item.id,
+          qty,
+          price: item.price,
+          name: item.name,
+        })),
+      );
+      if (check.issues.length > 0 || !check.shop) {
+        setCartIssues(check.issues);
+        return null;
+      }
 
-  const confirmPickup = useCallback((receiptId: string) => {
-    setState((prev) => ({
-      ...prev,
-      receipts: prev.receipts.map((r) =>
-        r.id === receiptId && r.status !== "picked_up"
-          ? { ...r, status: "picked_up", pickedUpAt: new Date().toISOString() }
-          : r,
-      ),
-    }));
+      const lines = cartItems
+        .map(({ item, qty }) => {
+          const menuItem = check.items.find((i) => i.itemId === item.id);
+          return menuItem ? { item: menuItem as MenuItemDoc, qty } : null;
+        })
+        .filter(Boolean) as { item: MenuItemDoc; qty: number }[];
+
+      const idempotencyKey = `${uid}:${cartShop.id}:${lines
+        .map((l) => `${l.item.itemId}x${l.qty}`)
+        .sort()
+        .join("|")}:${Math.floor(Date.now() / 60000)}`;
+
+      const order = await createOrder({
+        studentId: uid,
+        studentName: profile.name,
+        shop: check.shop,
+        lines,
+        discountRate: DISCOUNT_RATE,
+        idempotencyKey,
+      });
+
+      // Cloud Function verifies and marks the order PAID, then issues the receipt.
+      const { receiptId } = await confirmPayment(order.orderId);
+      setCart([]);
+      return { receiptId };
+    } catch (err) {
+      toast.error(friendlyError(err, "We couldn't complete your order."));
+      return null;
+    } finally {
+      setPlacing(false);
+    }
+  }, [cartItems, cartShop, placing, profile, uid]);
+
+  const confirmPickup = useCallback(async (receiptId: string) => {
+    await redeemReceipt(receiptId);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await authLogout();
+    setCart([]);
     toast("Logged out");
-  }, []);
+  }, [authLogout]);
+
+  /** Receipts are joined with their order so status is always live. */
+  const receipts = useMemo<Receipt[]>(() => {
+    return receiptDocs.map((r) => {
+      const order = orders.find((o) => o.orderId === r.orderId);
+      const status: ReceiptStatus =
+        r.status === "REDEEMED"
+          ? "picked_up"
+          : order?.orderStatus === "READY"
+            ? "ready"
+            : "preparing";
+      return {
+        id: r.receiptId,
+        code: r.receiptNumber,
+        shopId: r.shopId,
+        shopName: r.shopName,
+        counter: r.counter,
+        lines: (order?.items ?? []).map((i) => ({
+          name: i.name,
+          qty: i.quantity,
+          price: i.price,
+        })),
+        total: order?.totalAmount ?? 0,
+        paid: order?.paymentStatus === "PAID",
+        status,
+        createdAt: tsToIso(r.createdAt),
+        pickedUpAt: r.redeemedAt ? tsToIso(r.redeemedAt) : null,
+      };
+    });
+  }, [receiptDocs, orders]);
+
+  const user: User = profile
+    ? {
+        id: profile.uid,
+        name: profile.name?.split(" ")[0] ?? "there",
+        email: profile.email,
+        initials: (profile.name?.trim()?.charAt(0) ?? "S").toUpperCase(),
+      }
+    : GUEST;
 
   const value: StoreValue = {
-    ...state,
-    hydrated,
+    user,
+    signedIn: Boolean(uid),
+    cart,
+    favourites,
+    receipts,
+    orders,
+    hydrated: hydrated && ready,
     cartCount,
     cartItems,
     cartShopName: cartShop?.name ?? null,
@@ -276,6 +377,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toggleFavourite,
     favouriteItems,
     placeOrder,
+    cartIssues,
+    clearCartIssues: () => setCartIssues([]),
     confirmPickup,
     logout,
   };

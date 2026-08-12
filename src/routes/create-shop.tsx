@@ -14,6 +14,7 @@ import {
   type ShopAvailability,
 } from "@/lib/merchant-data";
 import { useMerchant } from "@/lib/merchant-store";
+import { uploadImage } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/create-shop")({
@@ -104,11 +105,21 @@ function MockUpload({
   aspect: string;
   onPick: (v: string | null) => void;
 }) {
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploading, setUploading] = useState(false);
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    onPick(URL.createObjectURL(file));
-    toast.success(`${label} uploaded`);
+    setUploading(true);
+    try {
+      // Uploaded straight to Cloudinary; only the CDN URL is stored later.
+      const asset = await uploadImage(file, `digitalfoodstreet/shops/pending/${Date.now()}`);
+      onPick(asset.url);
+      toast.success(`${label} uploaded`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "We couldn't upload that image.");
+    } finally {
+      setUploading(false);
+    }
   };
   return (
     <div>
@@ -130,8 +141,14 @@ function MockUpload({
       </div>
       <div className="mt-2 flex gap-2">
         <label className="inline-flex min-h-[42px] cursor-pointer items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold">
-          Upload
-          <input type="file" accept="image/*" className="hidden" onChange={onFile} />
+          {uploading ? "Uploading…" : "Upload"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => void onFile(e)}
+          />
         </label>
         {value && (
           <Button variant="ghost" onClick={() => onPick(null)}>
@@ -172,32 +189,29 @@ function CreateShopPage() {
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
-  const submit = () => {
+  const submit = async () => {
     setBusy(true);
-    window.setTimeout(() => {
-      const shop: OwnerShop = {
-        id: `${draft.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`,
-        name: draft.name.trim(),
-        description: draft.description.trim(),
+    setError(null);
+    try {
+      await createShop({
+        name: draft.name,
+        description: draft.description,
         category: draft.category,
         phone: draft.phone,
         email: draft.email,
         campus: draft.campus,
-        logo: draft.logo,
-        cover: draft.cover,
         prepTime: draft.prepTime,
-        availability: draft.availability,
         hours: draft.hours,
-        paymentConnected: false,
-        categories: ["Snacks", "Drinks"],
-        menu: [],
-        orders: [],
-        customers: [],
-      };
-      createShop(shop);
-      setBusy(false);
+        logo: draft.logo ? { url: draft.logo, publicId: "" } : null,
+        cover: draft.cover ? { url: draft.cover, publicId: "" } : null,
+      });
       setCreated(true);
-    }, 600);
+    } catch (err) {
+      // The draft is kept intact so the owner can simply retry.
+      setError(err instanceof Error ? err.message : "Couldn't create your shop.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (created) {
@@ -526,7 +540,7 @@ function CreateShopPage() {
             Save &amp; Continue
           </Button>
         ) : (
-          <Button className="flex-1" disabled={busy} onClick={submit}>
+          <Button className="flex-1" disabled={busy} onClick={() => void submit()}>
             {busy ? "Creating…" : "Create Shop"}
           </Button>
         )}
