@@ -14,8 +14,11 @@ import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CreateShopRouteImport } from './routes/create-shop'
 import { Route as FavouritesRouteImport } from './routes/favourites'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShopLoginRouteImport } from './routes/shop-login'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OrderReceiptIdRouteImport } from './routes/order.$receiptId'
 import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
 import { Route as ReceiptsReceiptIdRouteImport } from './routes/receipts.$receiptId'
@@ -53,6 +56,16 @@ const FavouritesRoute = FavouritesRouteImport.update({
   path: '/favourites',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -61,6 +74,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const ShopLoginRoute = ShopLoginRouteImport.update({
   id: '/shop-login',
   path: '/shop-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderReceiptIdRoute = OrderReceiptIdRouteImport.update({
@@ -125,8 +143,11 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
+  '/signup': typeof SignupRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
@@ -145,8 +166,11 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
+  '/signup': typeof SignupRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
@@ -166,8 +190,11 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
   '/favourites': typeof FavouritesRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
+  '/signup': typeof SignupRoute
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
@@ -188,8 +215,11 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/create-shop'
     | '/favourites'
+    | '/forgot-password'
+    | '/login'
     | '/profile'
     | '/shop-login'
+    | '/signup'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
@@ -208,8 +238,11 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/create-shop'
     | '/favourites'
+    | '/forgot-password'
+    | '/login'
     | '/profile'
     | '/shop-login'
+    | '/signup'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
@@ -228,8 +261,11 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/create-shop'
     | '/favourites'
+    | '/forgot-password'
+    | '/login'
     | '/profile'
     | '/shop-login'
+    | '/signup'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
@@ -249,8 +285,11 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   CreateShopRoute: typeof CreateShopRoute
   FavouritesRoute: typeof FavouritesRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   ShopLoginRoute: typeof ShopLoginRoute
+  SignupRoute: typeof SignupRoute
   OrderReceiptIdRoute: typeof OrderReceiptIdRoute
   ReceiptsReceiptIdRoute: typeof ReceiptsReceiptIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
@@ -301,6 +340,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavouritesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -313,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/shop-login'
       fullPath: '/shop-login'
       preLoaderRoute: typeof ShopLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order/$receiptId': {
@@ -401,8 +461,11 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   CreateShopRoute: CreateShopRoute,
   FavouritesRoute: FavouritesRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
   ShopLoginRoute: ShopLoginRoute,
+  SignupRoute: SignupRoute,
   OrderReceiptIdRoute: OrderReceiptIdRoute,
   ReceiptsReceiptIdRoute: ReceiptsReceiptIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,

@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Clock, Star } from "lucide-react";
 import { BackBar } from "@/components/app/BackBar";
@@ -8,15 +8,12 @@ import { FoodDetailsSheet } from "@/components/app/FoodDetailsSheet";
 import { StatusBadge } from "@/components/app/Primitives";
 import { FoodDetailsSheet as Sheet } from "@/components/app/FoodDetailsSheet";
 import { getShop, getShopFoods, type FoodItem } from "@/lib/data";
+import { useCatalog } from "@/lib/catalog-store";
+import { EmptyState } from "@/components/app/Primitives";
 
 export const Route = createFileRoute("/shop/$shopId")({
-  loader: ({ params }) => {
-    const shop = getShop(params.shopId);
-    if (!shop) throw notFound();
-    return { shop };
-  },
-  head: ({ loaderData }) => {
-    const name = loaderData?.shop.name ?? "Shop";
+  head: () => {
+    const name = "Shop";
     return {
       meta: [
         { title: `${name} — DigitalFoodStreet` },
@@ -33,8 +30,10 @@ export const Route = createFileRoute("/shop/$shopId")({
 });
 
 function ShopPage() {
-  const { shop } = Route.useLoaderData();
-  const items = getShopFoods(shop.id);
+  const { shopId } = Route.useParams();
+  const { loading } = useCatalog();
+  const shop = getShop(shopId);
+  const items = shop ? getShopFoods(shop.id) : [];
   const [category, setCategory] = useState("Popular");
   const [selected, setSelected] = useState<FoodItem | null>(null);
 
@@ -45,6 +44,18 @@ function ShopPage() {
 
   const visible =
     category === "Popular" ? items : items.filter((i) => i.category === category);
+
+  if (!shop) {
+    return (
+      <div className="pb-4">
+        <BackBar title="Shop" />
+        <EmptyState
+          title={loading ? "Loading shop…" : "Unable to load this shop."}
+          description={loading ? "One moment." : "It may no longer be available."}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-4">

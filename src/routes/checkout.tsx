@@ -23,19 +23,17 @@ function CheckoutPage() {
   const { cartItems, cartShopName, subtotal, discount, total, placeOrder } = useStore();
   const [loading, setLoading] = useState(false);
 
-  const pay = () => {
+  const pay = async () => {
+    if (loading) return; // guards double taps, refreshes and retries
     setLoading(true);
-    // Mock payment. Real payment verification arrives in a later phase.
-    setTimeout(() => {
-      const receipt = placeOrder();
-      setLoading(false);
-      if (!receipt) {
-        toast.error("Your cart is empty");
-        return;
-      }
+    try {
+      const result = await placeOrder();
+      if (!result) return;
       toast.success("Order confirmed · Receipt ready");
-      navigate({ to: "/order/$receiptId", params: { receiptId: receipt.id } });
-    }, 700);
+      navigate({ to: "/order/$receiptId", params: { receiptId: result.receiptId } });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,7 +91,7 @@ function CheckoutPage() {
         <div className="app-shell border-t border-border bg-surface px-5 pb-3 pt-3">
           <motion.button
             whileTap={{ scale: 0.98 }}
-            onClick={pay}
+            onClick={() => void pay()}
             disabled={loading || cartItems.length === 0}
             className="min-h-[52px] w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >

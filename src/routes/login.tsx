@@ -1,31 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "motion/react";
 import { useState } from "react";
+import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Button, Field, TextInput } from "@/components/merchant/MerchantUI";
 import { useAuth } from "@/lib/auth-store";
 
-export const Route = createFileRoute("/shop-login")({
+export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Shop Owner Login — DigitalFoodStreet" },
+      { title: "Sign In — DigitalFoodStreet" },
       {
         name: "description",
         content:
-          "Sign in to the DigitalFoodStreet merchant app to manage your campus shop, menu and orders.",
+          "Sign in to DigitalFoodStreet to pre-order campus food and collect it with a digital receipt.",
       },
-      { property: "og:title", content: "Shop Owner Login — DigitalFoodStreet" },
-      {
-        property: "og:description",
-        content: "Manage your campus shop, menu, orders and payments on DigitalFoodStreet.",
-      },
+      { property: "og:title", content: "Sign In — DigitalFoodStreet" },
+      { property: "og:description", content: "Pre-order campus food and skip the queue." },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: ShopLoginPage,
+  component: LoginPage,
 });
 
-function ShopLoginPage() {
+function LoginPage() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
@@ -35,6 +32,7 @@ function ShopLoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     if (!email.trim() || !password.trim()) {
       setError("Enter your email and password to continue.");
@@ -43,12 +41,8 @@ function ShopLoginPage() {
     setBusy(true);
     try {
       const profile = await signIn(email, password);
-      if (profile && profile.role === "STUDENT") {
-        setError("This account is registered as a student.");
-        return;
-      }
       toast.success("Signed in");
-      navigate({ to: "/shop", replace: true });
+      navigate({ to: profile?.role === "SHOP_OWNER" ? "/shop" : "/", replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't sign you in.");
     } finally {
@@ -68,9 +62,9 @@ function ShopLoginPage() {
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
             DigitalFoodStreet
           </p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight">Shop Owner Login</h1>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">Welcome back</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Manage your shop, menu and incoming orders.
+            Sign in to order and track your pickups.
           </p>
         </div>
 
@@ -84,7 +78,7 @@ function ShopLoginPage() {
               value={email}
               autoComplete="email"
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@shop.com"
+              placeholder="you@campus.edu"
             />
           </Field>
           <Field label="Password">
@@ -107,22 +101,21 @@ function ShopLoginPage() {
             {busy ? "Signing in…" : "Sign In"}
           </Button>
 
-          <button
-            type="button"
-            onClick={() => navigate({ to: "/forgot-password" })}
-            className="w-full text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+          <Link
+            to="/forgot-password"
+            className="block text-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             Forgot password?
-          </button>
+          </Link>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">Don't have a shop account?</p>
+          <p className="text-sm text-muted-foreground">New to DigitalFoodStreet?</p>
           <Link
-            to="/create-shop"
+            to="/signup"
             className="mt-2 inline-flex min-h-[46px] items-center justify-center rounded-xl border border-border bg-surface px-5 text-sm font-semibold"
           >
-            Create a Shop
+            Create an account
           </Link>
         </div>
       </motion.div>

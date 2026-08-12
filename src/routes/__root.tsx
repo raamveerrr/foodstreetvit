@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNavigation } from "@/components/app/BottomNavigation";
 import { isMerchantPath } from "@/components/merchant/MerchantShell";
 import { StoreProvider } from "@/lib/store";
+import { AuthProvider } from "@/lib/auth-store";
+import { CatalogProvider } from "@/lib/catalog-store";
 import { MerchantProvider } from "@/lib/merchant-store";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -145,6 +147,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+      <CatalogProvider>
       <StoreProvider>
         <MerchantProvider>
           <div className="min-h-screen bg-background">
@@ -165,6 +169,8 @@ function RootComponent() {
           <Toaster position="top-center" richColors closeButton={false} />
         </MerchantProvider>
       </StoreProvider>
+      </CatalogProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
