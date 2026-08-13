@@ -82,6 +82,26 @@ function MenuPage() {
     [menu, filter],
   );
 
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const asset = await uploadImage(
+        file,
+        cloudinaryFolders.menuItem(activeShop?.id ?? "pending", editing?.id || "new"),
+      );
+      setEditing((prev) =>
+        prev ? { ...prev, image: asset.url, imagePublicId: asset.publicId } : prev,
+      );
+      toast.success("Photo uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const openNew = () => {
     setIsNew(true);
     setEditing(emptyItem(categories[0] ?? "Snacks"));
