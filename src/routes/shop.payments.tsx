@@ -29,7 +29,7 @@ export const Route = createFileRoute("/shop/payments")({
 });
 
 function PaymentsPage() {
-  const { activeShop, updateShop } = useMerchant();
+  const { activeShop } = useMerchant();
   const [busy, setBusy] = useState(false);
   const connected = activeShop?.paymentConnected ?? false;
   const earned = (activeShop?.orders ?? [])
