@@ -71,14 +71,12 @@ function PaymentsPage() {
             Connect your payment account to receive payments for orders placed through
             DigitalFoodStreet. Payouts settle directly to this shop, never to a shared account.
           </p>
-          <Button className="mt-5 w-full" disabled={busy} onClick={toggle}>
-            {busy
-              ? connected
-                ? "Disconnecting…"
-                : "Connecting…"
-              : connected
-                ? "Disconnect Payment Account"
-                : "Connect Payment Account"}
+          <Button
+            className="mt-5 w-full"
+            disabled={busy || connected}
+            onClick={() => void connect()}
+          >
+            {busy ? "Connecting…" : connected ? "Payment Account Connected" : "Connect Payment Account"}
           </Button>
         </Card>
 
