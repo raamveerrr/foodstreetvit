@@ -1,0 +1,121 @@
+rules_version = '2';
+
+// DigitalFoodStreet security rules.
+//
+// Principles:
+// - A student can only ever read/write their own orders and receipts.
+// - A shop owner can only touch shops they own, and their shop's menu.
+// - Money fields (paymentStatus, receiptId, commission, redemption) are NEVER
+//   writable from a browser. Cloud Functions (admin SDK) bypass these rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isOwnerOf(shopId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/shops/$(shopId)).data.ownerId == request.auth.uid;
+    }
+
+    function isSuperAdmin() {
+      return signedIn() && userRole() == 'SUPER_ADMIN';
+    }
+
+    // ---------------- users ----------------
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isSuperAdmin());
+      // A user creates their own profile at signup, but can never grant
+      // themselves SUPER_ADMIN.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['STUDENT', 'SHOP_OWNER'];
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // ---------------- platform config ----------------
+    match /config/{docId} {
+      allow read: if true;                 // commission config is public knowledge
+      allow write: if isSuperAdmin();
+    }
+
+    // ---------------- shops ----------------
+    match /shops/{shopId} {
+      allow read: if true;                 // students browse the campus catalogue
+
+      allow create: if signedIn()
+        && userRole() == 'SHOP_OWNER'
+        && request.resource.data.ownerId == request.auth.uid
+        // payout/vendor state is provisioned by Cloud Functions only
+        && !('vendorId' in request.resource.data.keys())
+        && !('payoutConfigured' in request.resource.data.keys());
+
+      allow update: if isOwnerOf(shopId)
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.get('vendorId', null) == resource.data.get('vendorId', null)
+        && request.resource.data.get('payoutConfigured', false)
+             == resource.data.get('payoutConfigured', false);
+
+      allow delete: if isOwnerOf(shopId) || isSuperAdmin();
+
+      match /menuItems/{itemId} {
+        allow read: if true;
+        allow write: if isOwnerOf(shopId);
+      }
+
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if isOwnerOf(shopId);
+      }
+    }
+
+    // ---------------- orders ----------------
+    match /orders/{orderId} {
+      allow read: if signedIn()
+        && (resource.data.studentId == request.auth.uid
+            || isOwnerOf(resource.data.shopId)
+            || isSuperAdmin());
+
+      // A student may only create their own PENDING_PAYMENT order, never a paid
+      // one, and never with a receipt attached.
+      allow create: if signedIn()
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.paymentStatus == 'PENDING_PAYMENT'
+        && request.resource.data.orderStatus == 'PENDING_PAYMENT'
+        && request.resource.data.receiptId == null
+        && request.resource.data.totalAmount >= 0;
+
+      // The shop owner advances the fulfilment status only. Payment fields,
+      // amounts and the receipt link are immutable from any client.
+      allow update: if isOwnerOf(resource.data.shopId)
+        && request.resource.data.paymentStatus == resource.data.paymentStatus
+        && request.resource.data.totalAmount == resource.data.totalAmount
+        && request.resource.data.platformCommission == resource.data.platformCommission
+        && request.resource.data.shopAmount == resource.data.shopAmount
+        && request.resource.data.receiptId == resource.data.receiptId
+        && request.resource.data.orderStatus in
+             ['ACCEPTED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED'];
+
+      allow delete: if false;
+    }
+
+    // ---------------- receipts ----------------
+    // Receipts are issued and redeemed exclusively by Cloud Functions.
+    match /receipts/{receiptId} {
+      allow read: if signedIn()
+        && (resource.data.studentId == request.auth.uid
+            || isOwnerOf(resource.data.shopId)
+            || isSuperAdmin());
+      allow write: if false;
+    }
+  }
+}

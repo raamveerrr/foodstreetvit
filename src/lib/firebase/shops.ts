@@ -12,7 +12,8 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getDb } from "./client";
+import { httpsCallable } from "firebase/functions";
+import { getDb, getFns } from "./client";
 import { friendlyError } from "./errors";
 import type { CategoryDoc, MenuItemDoc, ShopDoc, ShopStatus } from "./types";
 
@@ -195,5 +196,25 @@ export async function deleteCategory(
     await deleteDoc(doc(categoryCol(shopId), categoryId));
   } catch (err) {
     throw new Error(friendlyError(err, "Unable to delete this category."));
+  }
+}
+
+/**
+ * Payout onboarding.
+ *
+ * The browser never sees or sends gateway credentials — this callable asks the
+ * Cloud Function to register the shop as its own payout vendor, so money for
+ * this shop's orders settles to this shop.
+ */
+export async function connectShopPayouts(shopId: string): Promise<{ vendorId: string }> {
+  try {
+    const call = httpsCallable<{ shopId: string }, { vendorId: string }>(
+      getFns(),
+      "connectShopPayouts",
+    );
+    const res = await call({ shopId });
+    return res.data;
+  } catch (err) {
+    throw new Error(friendlyError(err, "We couldn't connect your payment account."));
   }
 }

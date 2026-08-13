@@ -4,6 +4,7 @@ import { CreditCard, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 import { Button, Card, SectionHeading } from "@/components/merchant/MerchantUI";
+import { connectShopPayouts } from "@/lib/firebase/shops";
 import { formatMoney } from "@/lib/merchant-data";
 import { useMerchant } from "@/lib/merchant-store";
 
@@ -28,20 +29,24 @@ export const Route = createFileRoute("/shop/payments")({
 });
 
 function PaymentsPage() {
-  const { activeShop, updateShop } = useMerchant();
+  const { activeShop } = useMerchant();
   const [busy, setBusy] = useState(false);
   const connected = activeShop?.paymentConnected ?? false;
   const earned = (activeShop?.orders ?? [])
     .filter((o) => o.status === "COMPLETED")
     .reduce((n, o) => n + o.total, 0);
 
-  const toggle = () => {
+  const connect = async () => {
+    if (!activeShop) return;
     setBusy(true);
-    window.setTimeout(() => {
-      updateShop({ paymentConnected: !connected });
+    try {
+      await connectShopPayouts(activeShop.id);
+      toast.success("Payment account connected");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "We couldn't connect your account.");
+    } finally {
       setBusy(false);
-      toast.success(connected ? "Payment account disconnected" : "Payment account connected");
-    }, 500);
+    }
   };
 
   return (
@@ -66,13 +71,15 @@ function PaymentsPage() {
             Connect your payment account to receive payments for orders placed through
             DigitalFoodStreet. Payouts settle directly to this shop, never to a shared account.
           </p>
-          <Button className="mt-5 w-full" disabled={busy} onClick={toggle}>
+          <Button
+            className="mt-5 w-full"
+            disabled={busy || connected}
+            onClick={() => void connect()}
+          >
             {busy
-              ? connected
-                ? "Disconnecting…"
-                : "Connecting…"
+              ? "Connecting…"
               : connected
-                ? "Disconnect Payment Account"
+                ? "Payment Account Connected"
                 : "Connect Payment Account"}
           </Button>
         </Card>
