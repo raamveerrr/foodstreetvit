@@ -12,7 +12,8 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { getDb } from "./client";
+import { httpsCallable } from "firebase/functions";
+import { getDb, getFns } from "./client";
 import { friendlyError } from "./errors";
 import type { CategoryDoc, MenuItemDoc, ShopDoc, ShopStatus } from "./types";
 
