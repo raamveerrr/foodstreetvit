@@ -76,7 +76,11 @@ function PaymentsPage() {
             disabled={busy || connected}
             onClick={() => void connect()}
           >
-            {busy ? "Connecting…" : connected ? "Payment Account Connected" : "Connect Payment Account"}
+            {busy
+              ? "Connecting…"
+              : connected
+                ? "Payment Account Connected"
+                : "Connect Payment Account"}
           </Button>
         </Card>
 
