@@ -35,13 +35,17 @@ function PaymentsPage() {
     .filter((o) => o.status === "COMPLETED")
     .reduce((n, o) => n + o.total, 0);
 
-  const toggle = () => {
+  const connect = async () => {
+    if (!activeShop) return;
     setBusy(true);
-    window.setTimeout(() => {
-      updateShop({ paymentConnected: !connected });
+    try {
+      await connectShopPayouts(activeShop.id);
+      toast.success("Payment account connected");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "We couldn't connect your account.");
+    } finally {
       setBusy(false);
-      toast.success(connected ? "Payment account disconnected" : "Payment account connected");
-    }, 500);
+    }
   };
 
   return (
