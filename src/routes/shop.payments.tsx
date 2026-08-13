@@ -4,6 +4,7 @@ import { CreditCard, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 import { Button, Card, SectionHeading } from "@/components/merchant/MerchantUI";
+import { connectShopPayouts } from "@/lib/firebase/shops";
 import { formatMoney } from "@/lib/merchant-data";
 import { useMerchant } from "@/lib/merchant-store";
 
