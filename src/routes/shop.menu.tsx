@@ -16,6 +16,7 @@ import {
   TextArea,
   TextInput,
 } from "@/components/merchant/MerchantUI";
+import { cloudinaryFolders, uploadImage } from "@/lib/cloudinary";
 import { formatMoney, type MenuItem } from "@/lib/merchant-data";
 import { useMerchant } from "@/lib/merchant-store";
 import { cn } from "@/lib/utils";
