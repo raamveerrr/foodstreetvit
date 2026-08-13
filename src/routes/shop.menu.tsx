@@ -284,12 +284,57 @@ function MenuPage() {
                 </Select>
               </Field>
             </div>
-            <Field label="Image URL" hint="Image uploads move to cloud storage in a later phase.">
-              <TextInput
-                value={editing.image}
-                placeholder="https://…"
-                onChange={(e) => patch("image", e.target.value)}
-              />
+            <Field
+              label="Item photo"
+              hint="Uploaded to Cloudinary and delivered through their CDN. JPG or PNG, under 8 MB."
+            >
+              <div className="flex items-center gap-3">
+                <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-secondary text-[11px] text-muted-foreground">
+                  {editing.image ? (
+                    <img
+                      src={editing.image}
+                      alt={editing.name || "Menu item"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    "No image"
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <input
+                    id="menu-item-photo"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void handleUpload(file);
+                    }}
+                  />
+                  <label
+                    htmlFor="menu-item-photo"
+                    className={cn(
+                      "inline-flex min-h-[44px] cursor-pointer items-center rounded-xl border border-border px-4 text-sm font-medium",
+                      uploading && "pointer-events-none opacity-60",
+                    )}
+                  >
+                    {uploading ? "Uploading…" : editing.image ? "Replace photo" : "Upload photo"}
+                  </label>
+                  {editing.image ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        patch("image", "");
+                        patch("imagePublicId", null);
+                      }}
+                      className="ml-2 text-sm font-medium text-muted-foreground underline"
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             </Field>
             <Field label="Ingredients (optional)">
               <TextInput
