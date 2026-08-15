@@ -109,6 +109,9 @@ export interface OwnerShop {
   availability: ShopAvailability;
   hours: DayHours[];
   paymentConnected: boolean;
+  /** Cashfree Easy Split vendor. Provisioned by Cloud Functions only. */
+  vendorId?: string | null;
+  vendorStatus?: string | null;
   categories: string[];
   categoryIds: Record<string, string>;
   menu: MenuItem[];

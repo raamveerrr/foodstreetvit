@@ -299,6 +299,8 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
           availability: STATUS_TO_AVAILABILITY[s.status] ?? "closed",
           hours: (s.openingHours?.length ? s.openingHours : defaultHours()) as OwnerShop["hours"],
           paymentConnected: Boolean(s.payoutConfigured),
+          vendorId: s.vendorId ?? null,
+          vendorStatus: (s as { vendorStatus?: string }).vendorStatus ?? null,
           categories: catNames,
           categoryIds: isActive ? categoryIds : {},
           menu: isActive ? uiMenu : [],
