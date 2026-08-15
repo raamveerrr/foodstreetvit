@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 import {
@@ -71,23 +71,34 @@ function SettingsPage() {
         <Card className="space-y-4">
           <SectionHeading title="Basic information" />
           <Field label="Shop name">
-            <TextInput value={shop.name} onChange={(e) => updateShop({ name: e.target.value })} />
+            <TextInput
+              value={shop.name}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ name: e.target.value })}
+            />
           </Field>
           <Field label="Description">
             <TextArea
               value={shop.description}
-              onChange={(e) => updateShop({ description: e.target.value })}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                updateShop({ description: e.target.value })
+              }
             />
           </Field>
           <Field label="Category">
-            <Select value={shop.category} onChange={(e) => updateShop({ category: e.target.value })}>
+            <Select
+              value={shop.category}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => updateShop({ category: e.target.value })}
+            >
               {Array.from(new Set([shop.category, ...SHOP_CATEGORIES])).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </Select>
           </Field>
           <Field label="Average preparation time">
-            <Select value={shop.prepTime} onChange={(e) => updateShop({ prepTime: e.target.value })}>
+            <Select
+              value={shop.prepTime}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => updateShop({ prepTime: e.target.value })}
+            >
               {Array.from(
                 new Set([
                   shop.prepTime,
@@ -115,31 +126,40 @@ function SettingsPage() {
           <Field label="Cover image URL">
             <TextInput
               value={shop.cover ?? ""}
-              onChange={(e) => updateShop({ cover: e.target.value })}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ cover: e.target.value })}
             />
           </Field>
           <Field label="Logo image URL">
             <TextInput
               value={shop.logo ?? ""}
-              onChange={(e) => updateShop({ logo: e.target.value })}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ logo: e.target.value })}
             />
           </Field>
 
           <SectionHeading title="Contact information" />
           <Field label="Contact number">
-            <TextInput value={shop.phone} onChange={(e) => updateShop({ phone: e.target.value })} />
+            <TextInput
+              value={shop.phone}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ phone: e.target.value })}
+            />
           </Field>
           <Field label="Email">
-            <TextInput value={shop.email} onChange={(e) => updateShop({ email: e.target.value })} />
+            <TextInput
+              value={shop.email}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ email: e.target.value })}
+            />
           </Field>
           <Field label="Campus / location">
-            <TextInput value={shop.campus} onChange={(e) => updateShop({ campus: e.target.value })} />
+            <TextInput
+              value={shop.campus}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ campus: e.target.value })}
+            />
           </Field>
         </Card>
 
         <Card className="space-y-3 lg:col-span-2">
           <SectionHeading title="Opening hours" />
-          {shop.hours.map((h, i) => (
+          {shop.hours.map((h: any, i: number) => (
             <div
               key={h.day}
               className="rounded-xl border border-border p-3 sm:flex sm:items-center sm:justify-between sm:gap-3"
@@ -149,7 +169,7 @@ function SettingsPage() {
                 <button
                   onClick={() =>
                     updateShop({
-                      hours: shop.hours.map((d, di) => (di === i ? { ...d, open: !d.open } : d)),
+                      hours: shop.hours.map((d: any, di: number) => (di === i ? { ...d, open: !d.open } : d)),
                     })
                   }
                   className={cn(
@@ -165,9 +185,9 @@ function SettingsPage() {
                   <Select
                     aria-label={`${h.day} opening time`}
                     value={h.from}
-                    onChange={(e) =>
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                       updateShop({
-                        hours: shop.hours.map((d, di) =>
+                        hours: shop.hours.map((d: any, di: number) =>
                           di === i ? { ...d, from: e.target.value } : d,
                         ),
                       })
@@ -182,9 +202,9 @@ function SettingsPage() {
                   <Select
                     aria-label={`${h.day} closing time`}
                     value={h.to}
-                    onChange={(e) =>
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                       updateShop({
-                        hours: shop.hours.map((d, di) =>
+                        hours: shop.hours.map((d: any, di: number) =>
                           di === i ? { ...d, to: e.target.value } : d,
                         ),
                       })

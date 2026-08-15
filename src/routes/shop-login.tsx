@@ -115,16 +115,6 @@ function ShopLoginPage() {
             Forgot password?
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">Don't have a shop account?</p>
-          <Link
-            to="/create-shop"
-            className="mt-2 inline-flex min-h-[46px] items-center justify-center rounded-xl border border-border bg-surface px-5 text-sm font-semibold"
-          >
-            Create a Shop
-          </Link>
-        </div>
       </motion.div>
     </div>
   );

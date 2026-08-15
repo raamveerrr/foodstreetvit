@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-store";
 import { Check, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Card, Field, Select, TextArea, TextInput } from "@/components/merchant/MerchantUI";
@@ -163,11 +164,28 @@ function MockUpload({
 function CreateShopPage() {
   const navigate = useNavigate();
   const { createShop } = useMerchant();
+  const { profile } = useAuth();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState(false);
+
+  if (!profile) {
+    return (
+      <div className="p-6">
+        <p>Please sign in to access shop provisioning.</p>
+        <Button onClick={() => navigate({ to: "/login" })}>Sign in</Button>
+      </div>
+    );
+  }
+  if (profile.role !== "SUPER_ADMIN") {
+    return (
+      <div className="p-6">
+        <p>Access denied. Shop creation is restricted to administrators.</p>
+      </div>
+    );
+  }
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) =>
     setDraft((d) => ({ ...d, [k]: v }));

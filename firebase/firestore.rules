@@ -30,12 +30,13 @@ service cloud.firestore {
     // ---------------- users ----------------
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isSuperAdmin());
-      // A user creates their own profile at signup, but can never grant
-      // themselves SUPER_ADMIN.
+      // A user creates their own profile at signup. Clients may only create
+      // STUDENT accounts — SHOP_OWNER and SUPER_ADMIN must be provisioned
+      // server-side by an administrative Cloud Function.
       allow create: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.uid == uid
-        && request.resource.data.role in ['STUDENT', 'SHOP_OWNER'];
+        && request.resource.data.role == 'STUDENT';
       allow update: if signedIn()
         && request.auth.uid == uid
         && request.resource.data.role == resource.data.role;
@@ -52,12 +53,9 @@ service cloud.firestore {
     match /shops/{shopId} {
       allow read: if true;                 // students browse the campus catalogue
 
-      allow create: if signedIn()
-        && userRole() == 'SHOP_OWNER'
-        && request.resource.data.ownerId == request.auth.uid
-        // payout/vendor state is provisioned by Cloud Functions only
-        && !('vendorId' in request.resource.data.keys())
-        && !('payoutConfigured' in request.resource.data.keys());
+      // Shops may only be created by a SUPER_ADMIN via an authenticated
+      // server-side operation. Owners cannot create shops from the client.
+      allow create: if isSuperAdmin();
 
       allow update: if isOwnerOf(shopId)
         && request.resource.data.ownerId == resource.data.ownerId

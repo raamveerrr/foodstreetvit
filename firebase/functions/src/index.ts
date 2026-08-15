@@ -11,6 +11,7 @@
  */
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onRequest } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
@@ -23,6 +24,7 @@ import {
 
 initializeApp();
 const db = getFirestore();
+const auth = getAuth();
 
 const CASHFREE_SECRETS = ["CASHFREE_APP_ID", "CASHFREE_SECRET_KEY"];
 
@@ -242,4 +244,120 @@ export const connectShopPayouts = onCall({ secrets: CASHFREE_SECRETS }, async (r
     updatedAt: FieldValue.serverTimestamp(),
   });
   return { vendorId };
+});
+
+/**
+ * Provision a shop owner account and shop. Only callable by SUPER_ADMIN.
+ * This function uses the Admin SDK to create the Authentication account and
+ * two Firestore documents: users/{uid} and shops/{shopId}. It returns the
+ * newly created owner UID, shopId and the temporaryPassword (only once).
+ */
+export const createShopOwnerAndShop = onCall(async (req) => {
+  const callerUid = req.auth?.uid;
+  if (!callerUid) throw new HttpsError("unauthenticated", "Please sign in.");
+
+  // Verify caller is SUPER_ADMIN by reading their user profile.
+  const callerDoc = await db.collection("users").doc(callerUid).get();
+  const caller = callerDoc.exists ? (callerDoc.data() as Record<string, any>) : null;
+  if (!caller || caller["role"] !== "SUPER_ADMIN") {
+    throw new HttpsError("permission-denied", "Not authorised.");
+  }
+
+  const data = req.data as Record<string, any>;
+  const ownerName = String(data?.ownerName ?? "").trim();
+  const ownerEmail = String(data?.ownerEmail ?? "").trim().toLowerCase();
+  const ownerPhone = String(data?.ownerPhone ?? "").trim();
+  const temporaryPassword = String(data?.temporaryPassword ?? "");
+  const shop = data?.shop ?? {};
+
+  if (!ownerName || !ownerEmail || !temporaryPassword || !shop?.name) {
+    throw new HttpsError("invalid-argument", "Missing required fields.");
+  }
+
+  // Prevent duplicate emails.
+  try {
+    await auth.getUserByEmail(ownerEmail);
+    throw new HttpsError("already-exists", "This email is already registered.");
+  } catch (err: any) {
+    if (err.code && err.code !== "auth/user-not-found") {
+      // Unexpected admin error.
+      throw new HttpsError("internal", "Unable to verify email.");
+    }
+  }
+
+  // Create the auth user.
+  let createdUser;
+  try {
+    createdUser = await auth.createUser({
+      email: ownerEmail,
+      password: temporaryPassword,
+      displayName: ownerName,
+    });
+  } catch (err) {
+    throw new HttpsError("internal", "Unable to create authentication account.");
+  }
+
+  const ownerUid = createdUser.uid;
+
+  // Create users/{uid}
+  const userDoc = {
+    uid: ownerUid,
+    name: ownerName,
+    email: ownerEmail,
+    phone: ownerPhone || "",
+    role: "SHOP_OWNER",
+    mustChangePassword: true,
+    createdBy: callerUid,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  } as Record<string, any>;
+
+  // Create shops/{shopId}
+  const shopRef = db.collection("shops").doc();
+  const shopId = shopRef.id;
+  const shopDoc = {
+    shopId,
+    ownerId: ownerUid,
+    name: String(shop.name ?? "").trim(),
+    description: String(shop.description ?? "").trim(),
+    category: String(shop.category ?? "").trim(),
+    logoUrl: shop.logo?.url ?? null,
+    logoPublicId: shop.logo?.publicId ?? null,
+    coverImageUrl: shop.cover?.url ?? null,
+    coverPublicId: shop.cover?.publicId ?? null,
+    location: String(shop.campus ?? "").trim(),
+    contactNumber: String(shop.phone ?? "").trim(),
+    contactEmail: String(shop.email ?? "").trim(),
+    preparationTime: String(shop.prepTime ?? "").trim(),
+    rating: 5,
+    status: String(shop.status ?? "CLOSED").toUpperCase(),
+    openingHours: shop.hours ?? [],
+    vendorId: null,
+    payoutConfigured: false,
+    createdBy: callerUid,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  } as Record<string, any>;
+
+  try {
+    const batch = db.batch();
+    batch.set(db.collection("users").doc(ownerUid), userDoc);
+    batch.set(shopRef, shopDoc);
+    await batch.commit();
+  } catch (err) {
+    // Try to clean up the created auth user if Firestore write failed.
+    try {
+      await auth.deleteUser(ownerUid);
+    } catch (e) {
+      logger.error("Failed to delete orphaned auth user", { ownerUid });
+    }
+    throw new HttpsError("internal", "Unable to create user or shop.");
+  }
+
+  return {
+    ownerUid,
+    shopId,
+    temporaryPassword,
+    ownerEmail,
+  };
 });

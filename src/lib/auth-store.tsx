@@ -15,6 +15,7 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
   updateProfile,
   type User as FirebaseUser,
 } from "firebase/auth";
@@ -31,15 +32,10 @@ interface AuthValue {
   role: UserRole | null;
   isStudent: boolean;
   isOwner: boolean;
-  signUp: (input: {
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    role: Exclude<UserRole, "SUPER_ADMIN">;
-  }) => Promise<void>;
+  signUp: (input: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<UserDoc | null>;
   resetPassword: (email: string) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   updateOwnProfile: (patch: { name?: string; phone?: string }) => Promise<void>;
 }
@@ -76,19 +72,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stop;
   }, [firebaseUser]);
 
-  const signUp = useCallback<AuthValue["signUp"]>(async ({ name, email, password, phone, role }) => {
+  const signUp = useCallback<AuthValue["signUp"]>(async ({ name, email, password, phone }) => {
     const auth = getFirebaseAuth();
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(cred.user, { displayName: name.trim() });
       // The role is written once, at creation. Security rules make it immutable
       // from the client afterwards, so nobody can promote themselves.
+      // Public signup always creates STUDENT accounts.
       await setDoc(doc(getDb(), "users", cred.user.uid), {
         uid: cred.user.uid,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone?.trim() ?? "",
-        role,
+        role: "STUDENT",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -123,6 +120,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const changePassword = useCallback(async (newPassword: string) => {
+    if (!firebaseUser) throw new Error("Please sign in and try again.");
+    try {
+      await updatePassword(firebaseUser, newPassword);
+      // Update mustChangePassword flag in Firestore
+      await updateDoc(doc(getDb(), "users", firebaseUser.uid), {
+        mustChangePassword: false,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      throw new Error(friendlyError(err, "Unable to change your password."));
+    }
+  }, [firebaseUser]);
+
   const updateOwnProfile = useCallback<AuthValue["updateOwnProfile"]>(
     async (patch) => {
       if (!firebaseUser) throw new Error("Please sign in and try again.");
@@ -149,10 +160,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       resetPassword,
+      changePassword,
       logout,
       updateOwnProfile,
     }),
-    [ready, firebaseUser, profile, signUp, signIn, resetPassword, logout, updateOwnProfile],
+    [ready, firebaseUser, profile, signUp, signIn, resetPassword, changePassword, logout, updateOwnProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

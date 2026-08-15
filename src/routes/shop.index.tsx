@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import {
   nextStatus,
   type ShopAvailability,
 } from "@/lib/merchant-data";
+import { useAuth } from "@/lib/auth-store";
 import { useMerchant } from "@/lib/merchant-store";
 import { cn } from "@/lib/utils";
 
@@ -47,8 +48,17 @@ const AVAILABILITY_OPTIONS: { value: ShopAvailability; label: string }[] = [
 ];
 
 function ShopDashboard() {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
   const { activeShop, setAvailability, setOrderStatus } = useMerchant();
   const [greeting, setGreeting] = useState("Hello");
+
+  // If user needs to change password on first login, redirect to change-password
+  useEffect(() => {
+    if (profile?.mustChangePassword === true) {
+      navigate({ to: "/shop/change-password", replace: true });
+    }
+  }, [profile?.mustChangePassword, navigate]);
 
   useEffect(() => {
     const h = new Date().getHours();

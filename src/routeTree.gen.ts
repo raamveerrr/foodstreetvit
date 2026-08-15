@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CreateShopRouteImport } from './routes/create-shop'
@@ -19,21 +20,29 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShopLoginRouteImport } from './routes/shop-login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AdminShopsRouteImport } from './routes/admin/shops'
 import { Route as OrderReceiptIdRouteImport } from './routes/order.$receiptId'
 import { Route as ReceiptsIndexRouteImport } from './routes/receipts.index'
 import { Route as ReceiptsReceiptIdRouteImport } from './routes/receipts.$receiptId'
 import { Route as ShopIndexRouteImport } from './routes/shop.index'
 import { Route as ShopShopIdRouteImport } from './routes/shop.$shopId'
 import { Route as ShopAnalyticsRouteImport } from './routes/shop.analytics'
+import { Route as ShopChangePasswordRouteImport } from './routes/shop.change-password'
 import { Route as ShopCustomersRouteImport } from './routes/shop.customers'
 import { Route as ShopMenuRouteImport } from './routes/shop.menu'
 import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
 import { Route as ShopPaymentsRouteImport } from './routes/shop.payments'
 import { Route as ShopSettingsRouteImport } from './routes/shop.settings'
+import { Route as AdminShopsCreateRouteImport } from './routes/admin/shops.create'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartRoute = CartRouteImport.update({
@@ -81,6 +90,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminShopsRoute = AdminShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
+  getParentRoute: () => AdminRoute,
+} as any)
 const OrderReceiptIdRoute = OrderReceiptIdRouteImport.update({
   id: '/order/$receiptId',
   path: '/order/$receiptId',
@@ -111,6 +125,11 @@ const ShopAnalyticsRoute = ShopAnalyticsRouteImport.update({
   path: '/shop/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopChangePasswordRoute = ShopChangePasswordRouteImport.update({
+  id: '/shop/change-password',
+  path: '/shop/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopCustomersRoute = ShopCustomersRouteImport.update({
   id: '/shop/customers',
   path: '/shop/customers',
@@ -136,9 +155,15 @@ const ShopSettingsRoute = ShopSettingsRouteImport.update({
   path: '/shop/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminShopsCreateRoute = AdminShopsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminShopsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
@@ -148,10 +173,12 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
   '/signup': typeof SignupRoute
+  '/admin/shops': typeof AdminShopsRouteWithChildren
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/change-password': typeof ShopChangePasswordRoute
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
@@ -159,9 +186,11 @@ export interface FileRoutesByFullPath {
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/admin/shops/create': typeof AdminShopsCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
@@ -171,10 +200,12 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
   '/signup': typeof SignupRoute
+  '/admin/shops': typeof AdminShopsRouteWithChildren
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/change-password': typeof ShopChangePasswordRoute
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
@@ -182,10 +213,12 @@ export interface FileRoutesByTo {
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts': typeof ReceiptsIndexRoute
   '/shop': typeof ShopIndexRoute
+  '/admin/shops/create': typeof AdminShopsCreateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/create-shop': typeof CreateShopRoute
@@ -195,10 +228,12 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/shop-login': typeof ShopLoginRoute
   '/signup': typeof SignupRoute
+  '/admin/shops': typeof AdminShopsRouteWithChildren
   '/order/$receiptId': typeof OrderReceiptIdRoute
   '/receipts/$receiptId': typeof ReceiptsReceiptIdRoute
   '/shop/$shopId': typeof ShopShopIdRoute
   '/shop/analytics': typeof ShopAnalyticsRoute
+  '/shop/change-password': typeof ShopChangePasswordRoute
   '/shop/customers': typeof ShopCustomersRoute
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
@@ -206,11 +241,13 @@ export interface FileRoutesById {
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/admin/shops/create': typeof AdminShopsCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/cart'
     | '/checkout'
     | '/create-shop'
@@ -220,10 +257,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/shop-login'
     | '/signup'
+    | '/admin/shops'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
     | '/shop/analytics'
+    | '/shop/change-password'
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
@@ -231,9 +270,11 @@ export interface FileRouteTypes {
     | '/shop/settings'
     | '/receipts/'
     | '/shop/'
+    | '/admin/shops/create'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/cart'
     | '/checkout'
     | '/create-shop'
@@ -243,10 +284,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/shop-login'
     | '/signup'
+    | '/admin/shops'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
     | '/shop/analytics'
+    | '/shop/change-password'
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
@@ -254,9 +297,11 @@ export interface FileRouteTypes {
     | '/shop/settings'
     | '/receipts'
     | '/shop'
+    | '/admin/shops/create'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/cart'
     | '/checkout'
     | '/create-shop'
@@ -266,10 +311,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/shop-login'
     | '/signup'
+    | '/admin/shops'
     | '/order/$receiptId'
     | '/receipts/$receiptId'
     | '/shop/$shopId'
     | '/shop/analytics'
+    | '/shop/change-password'
     | '/shop/customers'
     | '/shop/menu'
     | '/shop/orders'
@@ -277,10 +324,12 @@ export interface FileRouteTypes {
     | '/shop/settings'
     | '/receipts/'
     | '/shop/'
+    | '/admin/shops/create'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   CreateShopRoute: typeof CreateShopRoute
@@ -294,6 +343,7 @@ export interface RootRouteChildren {
   ReceiptsReceiptIdRoute: typeof ReceiptsReceiptIdRoute
   ShopShopIdRoute: typeof ShopShopIdRoute
   ShopAnalyticsRoute: typeof ShopAnalyticsRoute
+  ShopChangePasswordRoute: typeof ShopChangePasswordRoute
   ShopCustomersRoute: typeof ShopCustomersRoute
   ShopMenuRoute: typeof ShopMenuRoute
   ShopOrdersRoute: typeof ShopOrdersRoute
@@ -310,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cart': {
@@ -375,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/shops': {
+      id: '/admin/shops'
+      path: '/shops'
+      fullPath: '/admin/shops'
+      preLoaderRoute: typeof AdminShopsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/order/$receiptId': {
       id: '/order/$receiptId'
       path: '/order/$receiptId'
@@ -417,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/change-password': {
+      id: '/shop/change-password'
+      path: '/shop/change-password'
+      fullPath: '/shop/change-password'
+      preLoaderRoute: typeof ShopChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/customers': {
       id: '/shop/customers'
       path: '/shop/customers'
@@ -452,11 +523,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/shops/create': {
+      id: '/admin/shops/create'
+      path: '/create'
+      fullPath: '/admin/shops/create'
+      preLoaderRoute: typeof AdminShopsCreateRouteImport
+      parentRoute: typeof AdminShopsRoute
+    }
   }
 }
 
+interface AdminShopsRouteChildren {
+  AdminShopsCreateRoute: typeof AdminShopsCreateRoute
+}
+
+const AdminShopsRouteChildren: AdminShopsRouteChildren = {
+  AdminShopsCreateRoute: AdminShopsCreateRoute,
+}
+
+const AdminShopsRouteWithChildren = AdminShopsRoute._addFileChildren(
+  AdminShopsRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminShopsRoute: typeof AdminShopsRouteWithChildren
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminShopsRoute: AdminShopsRouteWithChildren,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   CreateShopRoute: CreateShopRoute,
@@ -470,6 +571,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReceiptsReceiptIdRoute: ReceiptsReceiptIdRoute,
   ShopShopIdRoute: ShopShopIdRoute,
   ShopAnalyticsRoute: ShopAnalyticsRoute,
+  ShopChangePasswordRoute: ShopChangePasswordRoute,
   ShopCustomersRoute: ShopCustomersRoute,
   ShopMenuRoute: ShopMenuRoute,
   ShopOrdersRoute: ShopOrdersRoute,

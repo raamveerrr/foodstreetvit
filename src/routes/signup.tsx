@@ -23,12 +23,9 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
-type Role = "STUDENT" | "SHOP_OWNER";
-
 function SignupPage() {
   const navigate = useNavigate();
   const { signUp } = useAuth();
-  const [role, setRole] = useState<Role>("STUDENT");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -45,9 +42,9 @@ function SignupPage() {
     if (password.length < 6) return setError("Choose a password with at least 6 characters.");
     setBusy(true);
     try {
-      await signUp({ name, email, password, phone, role });
+      await signUp({ name, email, password, phone });
       toast.success("Account created");
-      navigate({ to: role === "SHOP_OWNER" ? "/create-shop" : "/", replace: true });
+      navigate({ to: "/", replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't create your account.");
     } finally {
@@ -77,20 +74,8 @@ function SignupPage() {
           onSubmit={(e) => void submit(e)}
           className="space-y-4 rounded-3xl border border-border bg-surface p-5 shadow-card sm:p-6"
         >
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-secondary p-1">
-            {(["STUDENT", "SHOP_OWNER"] as Role[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={cn(
-                  "min-h-[42px] rounded-xl text-sm font-semibold transition-colors",
-                  role === r ? "bg-surface text-foreground shadow-card" : "text-muted-foreground",
-                )}
-              >
-                {r === "STUDENT" ? "Student" : "Shop owner"}
-              </button>
-            ))}
+          <div className="rounded-2xl bg-secondary/60 p-3 text-sm text-muted-foreground">
+            Signing up creates a Student account. Shop owners must be provisioned by an administrator.
           </div>
 
           <Field label="Full name">
