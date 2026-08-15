@@ -42,13 +42,16 @@ export function subscribeShopReceipts(
  * an atomic transaction server-side, so two simultaneous swipes can never both
  * succeed and a redeemed receipt can never return to ACTIVE.
  */
-export async function redeemReceipt(receiptId: string): Promise<{ redeemedAt: string }> {
+export async function redeemReceipt(
+  input: string | { receiptId?: string; receiptNumber?: string },
+): Promise<{ redeemedAt: string; receiptId: string }> {
+  const payload = typeof input === "string" ? { receiptId: input } : input;
   try {
-    const call = httpsCallable<{ receiptId: string }, { redeemedAt: string }>(
+    const call = httpsCallable<typeof payload, { redeemedAt: string; receiptId: string }>(
       getFns(),
       "redeemReceipt",
     );
-    const res = await call({ receiptId });
+    const res = await call(payload);
     return res.data;
   } catch (err) {
     const code = String((err as { code?: string })?.code ?? "");

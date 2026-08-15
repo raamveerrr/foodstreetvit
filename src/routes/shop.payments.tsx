@@ -32,6 +32,8 @@ function PaymentsPage() {
   const { activeShop } = useMerchant();
   const [busy, setBusy] = useState(false);
   const connected = activeShop?.paymentConnected ?? false;
+  const vendorId = activeShop?.vendorId ?? null;
+  const maskedVendor = vendorId ? `••••${vendorId.slice(-4)}` : "—";
   const earned = (activeShop?.orders ?? [])
     .filter((o) => o.status === "COMPLETED")
     .reduce((n, o) => n + o.total, 0);
@@ -85,7 +87,7 @@ function PaymentsPage() {
         </Card>
 
         <Card>
-          <SectionHeading title="Payout summary" description="Mock figures for this phase." />
+          <SectionHeading title="Payout summary" description="Settlements are handled by Cashfree Easy Split." />
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Collected today</dt>
@@ -98,6 +100,14 @@ function PaymentsPage() {
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Payout schedule</dt>
               <dd className="font-semibold">{connected ? "Daily" : "Not set"}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Vendor ID</dt>
+              <dd className="font-mono font-semibold">{maskedVendor}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Settlement status</dt>
+              <dd className="font-semibold">{activeShop?.vendorStatus ?? "Not connected"}</dd>
             </div>
           </dl>
           <div className="mt-5 flex items-start gap-2 rounded-xl bg-secondary p-3 text-xs text-muted-foreground">
