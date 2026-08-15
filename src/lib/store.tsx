@@ -245,7 +245,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [favourites, foods],
   );
 
-  /** One order -> exactly one receipt, issued server-side after payment. */
+  /**
+   * Real checkout: the Cloud Function prices the cart and opens a Cashfree
+   * payment session, the student pays, and the server — never the browser —
+   * decides the order is PAID and issues the single receipt.
+   */
   const placeOrder = useCallback(async (): Promise<{ receiptId: string } | null> => {
     if (placing) return null;
     if (!uid || !profile) {
@@ -258,6 +262,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     setPlacing(true);
     try {
+      setCheckoutStep("validating");
       const check = await validateCart(
         cartShop.id,
         cartItems.map(({ item, qty }) => ({
@@ -272,38 +277,57 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      const lines = cartItems
-        .map(({ item, qty }) => {
-          const menuItem = check.items.find((i) => i.itemId === item.id);
-          return menuItem ? { item: menuItem as MenuItemDoc, qty } : null;
-        })
-        .filter(Boolean) as { item: MenuItemDoc; qty: number }[];
-
-      const idempotencyKey = `${uid}:${cartShop.id}:${lines
-        .map((l) => `${l.item.itemId}x${l.qty}`)
+      const items = cartItems.map(({ item, qty }) => ({ itemId: item.id, quantity: qty }));
+      const idempotencyKey = `${uid}:${cartShop.id}:${items
+        .map((l) => `${l.itemId}x${l.quantity}`)
         .sort()
         .join("|")}:${Math.floor(Date.now() / 60000)}`;
 
-      const order = await createOrder({
-        studentId: uid,
-        studentName: profile.name,
-        shop: check.shop,
-        lines,
-        discountRate: DISCOUNT_RATE,
+      setCheckoutStep("creating");
+      const session = await createCheckoutOrder({
+        shopId: cartShop.id,
+        items,
         idempotencyKey,
+        returnUrl: `${window.location.origin}/checkout`,
       });
 
-      // Cloud Function verifies and marks the order PAID, then issues the receipt.
-      const { receiptId } = await confirmPayment(order.orderId);
-      setCart([]);
-      return { receiptId };
+      if (session.alreadyPaid && session.receiptId) {
+        setCart([]);
+        return { receiptId: session.receiptId };
+      }
+      if (!session.paymentSessionId) throw new Error("Payment could not be started.");
+
+      setCheckoutStep("paying");
+      await openCashfreeCheckout(session.paymentSessionId, session.environment ?? "sandbox");
+
+      // Authoritative result. The webhook may confirm slightly later, so a
+      // pending answer is retried a few times before we call it unresolved.
+      setCheckoutStep("verifying");
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        const result = await verifyCashfreePayment(session.orderId);
+        if (result.status === "SUCCESS" && result.receiptId) {
+          setCart([]);
+          return { receiptId: result.receiptId };
+        }
+        if (result.status === "FAILED") {
+          toast.error("Payment failed. You have not been charged for this order.");
+          return null;
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      toast("Payment is still processing", {
+        description: "Your receipt will appear under Receipts as soon as it clears.",
+      });
+      return null;
     } catch (err) {
       toast.error(friendlyError(err, "We couldn't complete your order."));
       return null;
     } finally {
+      setCheckoutStep("idle");
       setPlacing(false);
     }
   }, [cartItems, cartShop, placing, profile, uid]);
+
 
   const confirmPickup = useCallback(async (receiptId: string) => {
     await redeemReceipt(receiptId);
