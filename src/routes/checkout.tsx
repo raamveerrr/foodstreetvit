@@ -18,9 +18,18 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
+const STEP_LABEL: Record<string, string> = {
+  idle: "Processing…",
+  validating: "Checking your items…",
+  creating: "Starting secure payment…",
+  paying: "Complete payment in the window…",
+  verifying: "Confirming your payment…",
+};
+
 function CheckoutPage() {
   const navigate = useNavigate();
-  const { cartItems, cartShopName, subtotal, discount, total, placeOrder } = useStore();
+  const { cartItems, cartShopName, subtotal, discount, total, placeOrder, checkoutStep } =
+    useStore();
   const [loading, setLoading] = useState(false);
 
   const pay = async () => {
@@ -76,13 +85,18 @@ function CheckoutPage() {
           </div>
         </div>
 
+        <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
+          Your total is calculated and verified on our servers. Your receipt is issued only after
+          the payment is confirmed by Cashfree.
+        </p>
+
         <div className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-card">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-accent-foreground">
             <Wallet size={18} />
           </span>
           <div>
-            <p className="text-sm font-semibold">Pay online</p>
-            <p className="text-xs text-muted-foreground">UPI · Cards · Wallets</p>
+            <p className="text-sm font-semibold">Pay securely with Cashfree</p>
+            <p className="text-xs text-muted-foreground">UPI · Cards · Netbanking · Wallets</p>
           </div>
         </div>
       </div>
@@ -95,7 +109,7 @@ function CheckoutPage() {
             disabled={loading || cartItems.length === 0}
             className="min-h-[52px] w-full rounded-2xl bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
-            {loading ? "Processing payment…" : `Pay ₹${total}`}
+            {loading ? STEP_LABEL[checkoutStep] : `Pay ₹${total} securely`}
           </motion.button>
         </div>
       </div>
