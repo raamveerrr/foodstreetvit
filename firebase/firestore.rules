@@ -87,12 +87,9 @@ service cloud.firestore {
 
       // A student may only create their own PENDING_PAYMENT order, never a paid
       // one, and never with a receipt attached.
-      allow create: if signedIn()
-        && request.resource.data.studentId == request.auth.uid
-        && request.resource.data.paymentStatus == 'PENDING_PAYMENT'
-        && request.resource.data.orderStatus == 'PENDING_PAYMENT'
-        && request.resource.data.receiptId == null
-        && request.resource.data.totalAmount >= 0;
+      // Orders are priced and created by Cloud Functions only, so that amounts,
+      // commission and the vendor split can never originate in a browser.
+      allow create: if false;
 
       // The shop owner advances the fulfilment status only. Payment fields,
       // amounts and the receipt link are immutable from any client.
@@ -102,6 +99,10 @@ service cloud.firestore {
         && request.resource.data.platformCommission == resource.data.platformCommission
         && request.resource.data.shopAmount == resource.data.shopAmount
         && request.resource.data.receiptId == resource.data.receiptId
+        && request.resource.data.shopNetAmount == resource.data.shopNetAmount
+        && request.resource.data.paymentGatewayCharges == resource.data.paymentGatewayCharges
+        && request.resource.data.refundAmount == resource.data.refundAmount
+        && request.resource.data.get('vendorId', null) == resource.data.get('vendorId', null)
         && request.resource.data.orderStatus in
              ['ACCEPTED', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED'];
 
@@ -116,6 +117,29 @@ service cloud.firestore {
             || isOwnerOf(resource.data.shopId)
             || isSuperAdmin());
       allow write: if false;
+    }
+
+    // ------------- financial + operational ledgers (functions only) -------------
+    // Written exclusively by Cloud Functions with the admin SDK.
+    match /transactions/{transactionId} {
+      allow read: if signedIn()
+        && (resource.data.studentId == request.auth.uid
+            || isOwnerOf(resource.data.shopId)
+            || isSuperAdmin());
+      allow write: if false;
+    }
+
+    match /webhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if false;
     }
   }
 }
