@@ -15,14 +15,17 @@ import { useAuth } from "./auth-store";
 import { getDb, isBrowser } from "./firebase/client";
 import { friendlyError } from "./firebase/errors";
 import {
-  confirmPayment,
-  createOrder,
   subscribeStudentOrders,
   validateCart,
   type CartValidationIssue,
 } from "./firebase/orders";
 import { subscribeStudentReceipts, redeemReceipt } from "./firebase/receipts";
-import type { MenuItemDoc, OrderDoc, ReceiptDoc } from "./firebase/types";
+import {
+  createCheckoutOrder,
+  openCashfreeCheckout,
+  verifyCashfreePayment,
+} from "./firebase/payments";
+import type { OrderDoc, ReceiptDoc } from "./firebase/types";
 
 export interface CartLine {
   itemId: string;
@@ -34,6 +37,8 @@ export interface ReceiptLine {
   qty: number;
   price: number;
 }
+
+export type CheckoutStep = "idle" | "validating" | "creating" | "paying" | "verifying";
 
 export type ReceiptStatus = "preparing" | "ready" | "picked_up";
 
@@ -75,6 +80,7 @@ interface StoreValue {
   favouriteItems: FoodItem[];
   /** Validates against the live menu, then places + pays for the order. */
   placeOrder: () => Promise<{ receiptId: string } | null>;
+  checkoutStep: CheckoutStep;
   cartIssues: CartValidationIssue[];
   clearCartIssues: () => void;
   confirmPickup: (receiptId: string) => Promise<void>;
@@ -106,6 +112,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [receiptDocs, setReceiptDocs] = useState<ReceiptDoc[]>([]);
   const [cartIssues, setCartIssues] = useState<CartValidationIssue[]>([]);
   const [placing, setPlacing] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("idle");
 
   const uid = firebaseUser?.uid ?? null;
 
@@ -401,6 +408,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toggleFavourite,
     favouriteItems,
     placeOrder,
+    checkoutStep,
     cartIssues,
     clearCartIssues: () => setCartIssues([]),
     confirmPickup,
