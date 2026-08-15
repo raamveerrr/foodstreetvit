@@ -29,6 +29,7 @@ import { Route as ShopCustomersRouteImport } from './routes/shop.customers'
 import { Route as ShopMenuRouteImport } from './routes/shop.menu'
 import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
 import { Route as ShopPaymentsRouteImport } from './routes/shop.payments'
+import { Route as ShopReceiptsRouteImport } from './routes/shop.receipts'
 import { Route as ShopSettingsRouteImport } from './routes/shop.settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -131,6 +132,11 @@ const ShopPaymentsRoute = ShopPaymentsRouteImport.update({
   path: '/shop/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopReceiptsRoute = ShopReceiptsRouteImport.update({
+  id: '/shop/receipts',
+  path: '/shop/receipts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopSettingsRoute = ShopSettingsRouteImport.update({
   id: '/shop/settings',
   path: '/shop/settings',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts': typeof ReceiptsIndexRoute
   '/shop': typeof ShopIndexRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
   '/shop/': typeof ShopIndexRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/receipts'
     | '/shop/settings'
     | '/receipts/'
     | '/shop/'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/receipts'
     | '/shop/settings'
     | '/receipts'
     | '/shop'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/receipts'
     | '/shop/settings'
     | '/receipts/'
     | '/shop/'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   ShopMenuRoute: typeof ShopMenuRoute
   ShopOrdersRoute: typeof ShopOrdersRoute
   ShopPaymentsRoute: typeof ShopPaymentsRoute
+  ShopReceiptsRoute: typeof ShopReceiptsRoute
   ShopSettingsRoute: typeof ShopSettingsRoute
   ReceiptsIndexRoute: typeof ReceiptsIndexRoute
   ShopIndexRoute: typeof ShopIndexRoute
@@ -445,6 +458,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/receipts': {
+      id: '/shop/receipts'
+      path: '/shop/receipts'
+      fullPath: '/shop/receipts'
+      preLoaderRoute: typeof ShopReceiptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/settings': {
       id: '/shop/settings'
       path: '/shop/settings'
@@ -474,6 +494,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopMenuRoute: ShopMenuRoute,
   ShopOrdersRoute: ShopOrdersRoute,
   ShopPaymentsRoute: ShopPaymentsRoute,
+  ShopReceiptsRoute: ShopReceiptsRoute,
   ShopSettingsRoute: ShopSettingsRoute,
   ReceiptsIndexRoute: ReceiptsIndexRoute,
   ShopIndexRoute: ShopIndexRoute,
