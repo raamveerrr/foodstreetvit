@@ -67,7 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stop = onSnapshot(
       ref,
       (snap) => setProfile(snap.exists() ? (snap.data() as UserDoc) : null),
-      () => setProfile(null),
+      (err) => {
+        // Log error but don't crash - Firestore might still be initializing
+        console.debug("Profile snapshot error:", err);
+        setProfile(null);
+      },
     );
     return stop;
   }, [firebaseUser]);

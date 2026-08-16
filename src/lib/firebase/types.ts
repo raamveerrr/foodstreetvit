@@ -10,6 +10,7 @@ export interface UserDoc {
   email: string;
   phone?: string;
   role: UserRole;
+  mustChangePassword?: boolean;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
 }

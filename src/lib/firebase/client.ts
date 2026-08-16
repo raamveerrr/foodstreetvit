@@ -26,7 +26,15 @@ export const getFirebaseApp = (): FirebaseApp => {
   return app;
 };
 
-export const getDb = (): Firestore => getFirestore(getFirebaseApp());
+export const getDb = (): Firestore => {
+  try {
+    const app = getFirebaseApp();
+    return getFirestore(app);
+  } catch (err) {
+    console.error("Failed to get Firestore instance:", err);
+    return getFirestore(getFirebaseApp());
+  }
+};
 export const getFirebaseAuth = (): Auth => getAuth(getFirebaseApp());
 export const getFns = (): Functions => getFunctions(getFirebaseApp());
 
