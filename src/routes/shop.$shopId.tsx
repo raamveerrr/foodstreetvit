@@ -31,9 +31,9 @@ export const Route = createFileRoute("/shop/$shopId")({
 
 function ShopPage() {
   const { shopId } = Route.useParams();
-  const { loading } = useCatalog();
-  const shop = getShop(shopId);
-  const items = shop ? getShopFoods(shop.id) : [];
+  const { loading, shops, foods } = useCatalog();
+  const shop = shops.find(s => s.id === shopId);
+  const items = shop ? foods.filter(f => f.shopId === shop.id) : [];
   const [category, setCategory] = useState("Popular");
   const [selected, setSelected] = useState<FoodItem | null>(null);
 

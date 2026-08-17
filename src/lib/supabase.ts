@@ -53,12 +53,41 @@ export async function createShopOwnerAndShop(
   );
 
   if (error) {
-    throw new Error(error.message || "We couldn't create that shop and owner.");
+    if (error as any) {
+      console.dir(error);
+    }
+    // Attempt to extract more specific error message if it's a HTTP error
+    let specificError = "We couldn't create that shop and owner.";
+    try {
+      if (error && typeof (error as any).context?.text === "function") {
+        const bodyText = await (error as any).context.text();
+        const bodyJson = JSON.parse(bodyText);
+        if (bodyJson.message) specificError = bodyJson.message;
+      }
+    } catch (e) {
+      // ignore
+    }
+    throw new Error(specificError);
   }
 
-  if (!data?.success) {
-    throw new Error(data?.message || "We couldn't create that shop and owner.");
+  const normalised = (data ?? {}) as Partial<CreateShopOwnerResult>;
+
+  if (normalised.success === false) {
+    throw new Error(normalised.message || "We couldn't create that shop and owner.");
   }
 
-  return data;
+  if (normalised.success === true || normalised.shopId || normalised.ownerId || normalised.ownerEmail) {
+    return {
+      success: true,
+      message: normalised.message || "Shop and owner created successfully.",
+      shopId: normalised.shopId,
+      ownerId: normalised.ownerId,
+      shopName: normalised.shopName,
+      ownerName: normalised.ownerName,
+      ownerEmail: normalised.ownerEmail,
+      temporaryPassword: normalised.temporaryPassword,
+    };
+  }
+
+  throw new Error("We couldn't create that shop and owner.");
 };

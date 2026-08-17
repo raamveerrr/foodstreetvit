@@ -25,10 +25,12 @@ export function AppHeader({
   greeting,
   subtitle,
   initials,
+  signedIn = true,
 }: {
   greeting: string;
   subtitle: string;
   initials: string;
+  signedIn?: boolean;
 }) {
   return (
     <header className="flex items-start justify-between gap-4 px-5 pt-6">
@@ -37,13 +39,22 @@ export function AppHeader({
         <h1 className="mt-0.5 text-[22px] font-bold leading-tight tracking-tight">{subtitle}</h1>
       </div>
       <motion.div whileTap={{ scale: 0.92 }}>
-        <Link
-          to="/profile"
-          aria-label="Open profile"
-          className="grid h-11 w-11 place-items-center rounded-full border border-border bg-surface"
-        >
-          <Avatar initials={initials} className="h-9 w-9" />
-        </Link>
+        {signedIn ? (
+          <Link
+            to="/profile"
+            aria-label="Open profile"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-surface shadow-sm"
+          >
+            <Avatar initials={initials} className="h-9 w-9" />
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            className="mt-1 flex h-9 shrink-0 items-center whitespace-nowrap rounded-full bg-primary px-5 text-[13.5px] font-bold text-primary-foreground shadow-sm transition-all active:scale-95"
+          >
+            Sign In
+          </Link>
+        )}
       </motion.div>
     </header>
   );

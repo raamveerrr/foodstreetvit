@@ -25,22 +25,6 @@ interface SuccessData {
 function AdminCreateShopPage() {
   const navigate = useNavigate();
   const { profile, ready } = useAuth();
-  const [busy, setBusy] = useState(false);
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
-  const [ownerPhone, setOwnerPhone] = useState("");
-  const [temporaryPassword, setTemporaryPassword] = useState("");
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(SHOP_CATEGORIES[0] ?? "");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [campus, setCampus] = useState("Campus Food Court");
-  const [prepTime, setPrepTime] = useState("10–15 minutes");
-  const [hours] = useState(defaultHours());
-
-  const [success, setSuccess] = useState<SuccessData | null>(null);
 
   if (!ready) {
     return <div className="p-6">Loading...</div>;
@@ -62,6 +46,29 @@ function AdminCreateShopPage() {
       </div>
     );
   }
+
+  // Only call hooks after auth checks pass
+  return <AdminCreateShopContent />;
+}
+
+function AdminCreateShopContent() {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [temporaryPassword, setTemporaryPassword] = useState("");
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState(SHOP_CATEGORIES[0] ?? "");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [campus, setCampus] = useState("Campus Food Court");
+  const [prepTime, setPrepTime] = useState("10–15 minutes");
+  const [hours] = useState(defaultHours());
+
+  const [success, setSuccess] = useState<SuccessData | null>(null);
 
   if (success) {
     // Success screen

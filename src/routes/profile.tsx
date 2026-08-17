@@ -25,8 +25,20 @@ const ROWS = [
 ];
 
 function ProfilePage() {
-  const { user, receipts, logout } = useStore();
+  const { user, receipts, logout, signedIn } = useStore();
   const [confirmLogout, setConfirmLogout] = useState(false);
+
+  if (!signedIn) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center p-5 text-center">
+        <h1 className="text-xl font-bold">Please sign in</h1>
+        <p className="mt-2 text-sm text-muted-foreground">You need to sign in to view your profile.</p>
+        <Link to="/login" className="mt-6 flex h-11 w-full max-w-[200px] items-center justify-center rounded-xl bg-primary font-bold text-primary-foreground">
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-6">

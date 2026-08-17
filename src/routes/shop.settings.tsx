@@ -12,6 +12,7 @@ import {
   TextInput,
 } from "@/components/merchant/MerchantUI";
 import { SHOP_CATEGORIES, TIME_OPTIONS, type ShopAvailability } from "@/lib/merchant-data";
+import { cloudinaryFolders, uploadImage } from "@/lib/cloudinary";
 import { useMerchant } from "@/lib/merchant-store";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,8 @@ export const Route = createFileRoute("/shop/settings")({
 function SettingsPage() {
   const { activeShop, updateShop } = useMerchant();
   const [busy, setBusy] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   if (!activeShop) {
     return (
@@ -55,6 +58,32 @@ function SettingsPage() {
       setBusy(false);
       toast.success("Shop settings updated");
     }, 400);
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setUploadingCover(true);
+    try {
+      const asset = await uploadImage(file, cloudinaryFolders.shopCover(shop.id));
+      updateShop({ cover: asset.url, coverPublicId: asset.publicId });
+      toast.success("Cover image uploaded and saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleLogoUpload = async (file: File) => {
+    setUploadingLogo(true);
+    try {
+      const asset = await uploadImage(file, cloudinaryFolders.shopLogo(shop.id));
+      updateShop({ logo: asset.url, logoPublicId: asset.publicId });
+      toast.success("Logo uploaded and saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   return (
@@ -123,17 +152,83 @@ function SettingsPage() {
               className="aspect-[16/9] w-full rounded-xl object-cover"
             />
           )}
-          <Field label="Cover image URL">
-            <TextInput
-              value={shop.cover ?? ""}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ cover: e.target.value })}
-            />
+          <Field label="Cover image">
+            <div className="flex items-center gap-3">
+              <input
+                id="shop-cover-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void handleCoverUpload(file);
+                }}
+              />
+              <label
+                htmlFor="shop-cover-upload"
+                className={cn(
+                  "inline-flex min-h-[44px] cursor-pointer items-center rounded-xl border border-border px-4 text-sm font-medium",
+                  uploadingCover && "pointer-events-none opacity-60",
+                )}
+              >
+                {uploadingCover ? "Uploading…" : shop.cover ? "Replace cover" : "Upload cover"}
+              </label>
+              {shop.cover ? (
+                <button
+                  type="button"
+                  onClick={() => updateShop({ cover: "", coverPublicId: null })}
+                  className="text-sm font-medium text-muted-foreground underline"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
           </Field>
-          <Field label="Logo image URL">
-            <TextInput
-              value={shop.logo ?? ""}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => updateShop({ logo: e.target.value })}
-            />
+
+          <Field label="Logo image">
+            <div className="flex items-center gap-3">
+              {shop.logo ? (
+                <img
+                  src={shop.logo}
+                  alt={`${shop.name} logo`}
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-secondary text-xs text-muted-foreground">
+                  None
+                </div>
+              )}
+              <input
+                id="shop-logo-upload"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void handleLogoUpload(file);
+                }}
+              />
+              <label
+                htmlFor="shop-logo-upload"
+                className={cn(
+                  "inline-flex min-h-[44px] cursor-pointer items-center rounded-xl border border-border px-4 text-sm font-medium",
+                  uploadingLogo && "pointer-events-none opacity-60",
+                )}
+              >
+                {uploadingLogo ? "Uploading…" : shop.logo ? "Replace logo" : "Upload logo"}
+              </label>
+              {shop.logo ? (
+                <button
+                  type="button"
+                  onClick={() => updateShop({ logo: "", logoPublicId: null })}
+                  className="text-sm font-medium text-muted-foreground underline"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
           </Field>
 
           <SectionHeading title="Contact information" />

@@ -6,7 +6,7 @@
 
 /*
  * DigitalFoodStreet design system.
- * Warm neutral canvas + a single food-inspired tangerine accent.
+ * Warm neutral canvas + a sophisticated light orange accent.
  */
 
 @theme inline {
@@ -65,10 +65,12 @@
   --card-foreground: oklch(0.21 0.02 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.21 0.02 60);
-  --primary: oklch(0.645 0.192 38);
-  --primary-foreground: oklch(0.995 0.005 80);
-  --primary-soft: oklch(0.955 0.033 60);
-  --secondary: oklch(0.955 0.008 80);
+  --primary: oklch(0.68 0.16 42);
+  /* Premium sunset orange */
+  --primary-foreground: oklch(0.99 0.01 45);
+  --primary-soft: oklch(0.94 0.04 45);
+  /* Very light aesthetic orange bg */
+  --secondary: oklch(0.96 0.01 70);
   --secondary-foreground: oklch(0.28 0.02 60);
   --muted: oklch(0.958 0.007 80);
   --muted-foreground: oklch(0.545 0.018 65);
@@ -85,12 +87,12 @@
   --ring: oklch(0.645 0.192 38);
   --sidebar: oklch(0.985 0.006 85);
   --sidebar-foreground: oklch(0.21 0.02 60);
-  --sidebar-primary: oklch(0.645 0.192 38);
-  --sidebar-primary-foreground: oklch(0.995 0.005 80);
-  --sidebar-accent: oklch(0.955 0.033 60);
+  --sidebar-primary: oklch(0.68 0.16 42);
+  --sidebar-primary-foreground: oklch(0.99 0.01 45);
+  --sidebar-accent: oklch(0.96 0.04 45);
   --sidebar-accent-foreground: oklch(0.42 0.13 40);
   --sidebar-border: oklch(0.918 0.008 75);
-  --sidebar-ring: oklch(0.645 0.192 38);
+  --sidebar-ring: oklch(0.68 0.16 42);
 }
 
 .dark {
@@ -101,10 +103,10 @@
   --card-foreground: oklch(0.97 0.005 80);
   --popover: oklch(0.22 0.014 60);
   --popover-foreground: oklch(0.97 0.005 80);
-  --primary: oklch(0.7 0.185 40);
-  --primary-foreground: oklch(0.18 0.02 60);
-  --primary-soft: oklch(0.28 0.05 45);
-  --secondary: oklch(0.27 0.014 60);
+  --primary: oklch(0.72 0.16 42);
+  --primary-foreground: oklch(0.20 0.02 45);
+  --primary-soft: oklch(0.30 0.06 45);
+  --secondary: oklch(0.25 0.01 60);
   --secondary-foreground: oklch(0.97 0.005 80);
   --muted: oklch(0.27 0.014 60);
   --muted-foreground: oklch(0.7 0.015 70);
@@ -118,15 +120,15 @@
   --warning: oklch(0.78 0.14 78);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.7 0.185 40);
-  --sidebar: oklch(0.17 0.012 60);
+  --ring: oklch(0.72 0.16 42);
+  --sidebar: oklch(0.18 0.01 60);
   --sidebar-foreground: oklch(0.97 0.005 80);
-  --sidebar-primary: oklch(0.7 0.185 40);
-  --sidebar-primary-foreground: oklch(0.18 0.02 60);
-  --sidebar-accent: oklch(0.28 0.05 45);
+  --sidebar-primary: oklch(0.72 0.16 42);
+  --sidebar-primary-foreground: oklch(0.20 0.02 45);
+  --sidebar-accent: oklch(0.30 0.06 45);
   --sidebar-accent-foreground: oklch(0.85 0.1 50);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.7 0.185 40);
+  --sidebar-ring: oklch(0.72 0.16 42);
 }
 
 @layer base {
@@ -153,6 +155,7 @@
 
 @utility no-scrollbar {
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }

@@ -6,8 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { collection, collectionGroup, onSnapshot } from "firebase/firestore";
-import { getDb, isBrowser } from "./firebase/client";
+import { subscribeAllShops, subscribeAllMenuItems } from "./supabase-shops";
 import { cldUrl } from "./cloudinary";
 import { setCatalogSnapshot, type FoodItem, type Shop } from "./data";
 import type { MenuItemDoc, ShopDoc } from "./firebase/types";
@@ -15,7 +14,7 @@ import type { MenuItemDoc, ShopDoc } from "./firebase/types";
 /**
  * The single live catalog subscription for the whole student app.
  *
- * Two filtered listeners (shops, menu items) are created once at the app root
+ * Two listeners (shops, menu items) are created once at the app root
  * and torn down on unmount — no component ever opens its own listener, so
  * duplicate subscriptions are impossible.
  */
@@ -68,32 +67,29 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isBrowser) return;
-    const db = getDb();
-    const stopShops = onSnapshot(
-      collection(db, "shops"),
-      (snap) => {
-        setShops(snap.docs.map((d) => toShop(d.data() as ShopDoc)));
+    const stopShops = subscribeAllShops(
+      (docs) => {
+        setShops(docs.map(toShop));
         setShopsLoaded(true);
         setError(null);
       },
-      () => {
+      (msg) => {
         setShopsLoaded(true);
-        setError("Unable to load campus shops.");
+        setError(msg || "Unable to load campus shops.");
       },
     );
-    // One collection-group listener covers every shop's menu.
-    const stopItems = onSnapshot(
-      collectionGroup(db, "menuItems"),
-      (snap) => {
-        setFoods(snap.docs.map((d) => toFood(d.data() as MenuItemDoc)));
+
+    const stopItems = subscribeAllMenuItems(
+      (docs) => {
+        setFoods(docs.map(toFood));
         setFoodsLoaded(true);
       },
-      () => {
+      (_msg) => {
         setFoodsLoaded(true);
         setError("Unable to load the menu.");
       },
     );
+
     return () => {
       stopShops();
       stopItems();
@@ -104,7 +100,6 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setCatalogSnapshot(shops, foods);
   }, [shops, foods]);
-  if (isBrowser) setCatalogSnapshot(shops, foods);
 
   const value = useMemo<CatalogValue>(
     () => ({ shops, foods, loading: !(shopsLoaded && foodsLoaded), error }),

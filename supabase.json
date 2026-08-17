@@ -1,0 +1,9 @@
+{
+  "project_id": "gnkuiljuevvexulwyion",
+  "functions": [
+    {
+      "slug": "create-shop-owner-and-shop",
+      "excludeScripts": false
+    }
+  ]
+}

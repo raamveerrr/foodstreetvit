@@ -40,8 +40,9 @@ const MERCHANT_PATHS = new Set<string>([
 /** Student `/shop/$shopId` pages must never be treated as merchant routes. */
 export const isMerchantPath = (pathname: string) => {
   const cleanPath = pathname.replace(/\/$/, "") || "/";
-  // Check if path is in MERCHANT_PATHS OR starts with /shop/ or /admin/
-  return MERCHANT_PATHS.has(cleanPath) || cleanPath.startsWith("/shop/") || cleanPath.startsWith("/admin/");
+  // The only dynamic merchant paths are those under /admin
+  if (cleanPath.startsWith("/admin")) return true;
+  return MERCHANT_PATHS.has(cleanPath) || cleanPath === "/shop/change-password";
 };
 
 const AVAILABILITY = {
@@ -117,13 +118,7 @@ export function MerchantShell({
   }, [hydrated, authed, navigate]);
 
   if (!hydrated || !authed) {
-    return (
-      <div className="mx-auto w-full max-w-6xl space-y-4 p-5">
-        <SkeletonBlock className="h-12 w-52" />
-        <SkeletonBlock className="h-28 w-full" />
-        <SkeletonBlock className="h-64 w-full" />
-      </div>
-    );
+    return null;
   }
 
   return (

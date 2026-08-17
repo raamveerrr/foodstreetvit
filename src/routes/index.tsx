@@ -9,12 +9,10 @@ import { FoodDetailsSheet } from "@/components/app/FoodDetailsSheet";
 import { EmptyState } from "@/components/app/Primitives";
 import {
   CATEGORIES,
-  getPopularFoods,
-  getShops,
-  getFoods,
   type FoodItem,
 } from "@/lib/data";
 import { useStore } from "@/lib/store";
+import { useCatalog } from "@/lib/catalog-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,6 +35,7 @@ export const Route = createFileRoute("/")({
 
 const greetingFor = () => {
   const h = new Date().getHours();
+  if (h < 5) return "Late night cravings";
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
@@ -53,27 +52,28 @@ function HomePage() {
   useEffect(() => setGreeting(greetingFor()), []);
 
 
-  const shops = getShops();
-  const popular = getPopularFoods();
+  const { shops, foods } = useCatalog();
+  const popular = useMemo(() => foods.filter((f) => f.popular), [foods]);
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
     return {
-      foods: getFoods().filter((f) => f.name.toLowerCase().includes(q)),
+      foods: foods.filter((f) => f.name.toLowerCase().includes(q)),
       shops: shops.filter((s) => s.name.toLowerCase().includes(q)),
     };
-  }, [query, shops]);
+  }, [query, shops, foods]);
 
   const filteredPopular =
-    category === "All" ? popular : getFoods().filter((f) => f.category === category);
+    category === "All" ? popular : foods.filter((f) => f.category === category && f.popular);
 
   return (
     <div className="pb-4">
       <AppHeader
-        greeting={`${greeting}, ${user.name} 👋`}
+        greeting={user.id ? `${greeting}, ${user.name} 👋` : greeting + " 👋"}
         subtitle="What are you craving today?"
         initials={user.initials}
+        signedIn={Boolean(user.id)}
       />
 
       <div className="pt-5">

@@ -7,25 +7,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { getFood, getShop, type FoodItem, type User } from "./data";
 import { useCatalog } from "./catalog-store";
 import { useAuth } from "./auth-store";
-import { getDb, isBrowser } from "./firebase/client";
-import { friendlyError } from "./firebase/errors";
+import { supabase } from "./supabase";
 import {
   subscribeStudentOrders,
   validateCart,
+  createOrder,
+  confirmPayment,
   type CartValidationIssue,
-} from "./firebase/orders";
-import { subscribeStudentReceipts, redeemReceipt } from "./firebase/receipts";
-import {
-  createCheckoutOrder,
-  openCashfreeCheckout,
-  verifyCashfreePayment,
-} from "./firebase/payments";
-import type { OrderDoc, ReceiptDoc } from "./firebase/types";
+} from "./supabase-orders";
+import type { OrderDoc } from "./firebase/types";
 
 export interface CartLine {
   itemId: string;
@@ -109,7 +103,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [favourites, setFavourites] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [orders, setOrders] = useState<OrderDoc[]>([]);
-  const [receiptDocs, setReceiptDocs] = useState<ReceiptDoc[]>([]);
   const [cartIssues, setCartIssues] = useState<CartValidationIssue[]>([]);
   const [placing, setPlacing] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>("idle");
@@ -143,29 +136,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!uid) return;
     let cancelled = false;
-    void getDoc(doc(getDb(), "users", uid))
-      .then((snap) => {
-        const remote = (snap.data() as { favourites?: string[] } | undefined)?.favourites;
-        if (!cancelled && Array.isArray(remote) && remote.length) setFavourites(remote);
-      })
-      .catch(() => undefined);
+    void supabase
+      .from("users")
+      .select("favourites")
+      .eq("uid", uid)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled && data?.favourites && Array.isArray(data.favourites)) {
+          setFavourites(data.favourites);
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, [uid]);
 
-  // Realtime orders + receipts for this student only.
+  // Realtime orders for this student only.
   useEffect(() => {
-    if (!isBrowser || !uid) {
+    if (typeof window === "undefined" || !uid) {
       setOrders([]);
-      setReceiptDocs([]);
       return;
     }
     const stopOrders = subscribeStudentOrders(uid, setOrders, (m) => toast.error(m));
-    const stopReceipts = subscribeStudentReceipts(uid, setReceiptDocs, (m) => toast.error(m));
     return () => {
       stopOrders();
-      stopReceipts();
     };
   }, [uid]);
 
@@ -239,7 +233,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const next = has ? prev.filter((id) => id !== item.id) : [...prev, item.id];
         toast(has ? "Removed from favourites" : "Added to favourites");
         if (uid) {
-          void updateDoc(doc(getDb(), "users", uid), { favourites: next }).catch(() => undefined);
+          void supabase.from("users").update({ favourites: next }).eq("uid", uid);
         }
         return next;
       });
@@ -252,11 +246,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [favourites, foods],
   );
 
-  /**
-   * Real checkout: the Cloud Function prices the cart and opens a Cashfree
-   * payment session, the student pays, and the server — never the browser —
-   * decides the order is PAID and issues the single receipt.
-   */
   const placeOrder = useCallback(async (): Promise<{ receiptId: string } | null> => {
     if (placing) return null;
     if (!uid || !profile) {
@@ -269,65 +258,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     setPlacing(true);
     try {
-      setCheckoutStep("validating");
-      const check = await validateCart(
-        cartShop.id,
-        cartItems.map(({ item, qty }) => ({
-          itemId: item.id,
-          qty,
-          price: item.price,
-          name: item.name,
-        })),
-      );
-      if (check.issues.length > 0 || !check.shop) {
-        setCartIssues(check.issues);
-        return null;
-      }
-
-      const items = cartItems.map(({ item, qty }) => ({ itemId: item.id, quantity: qty }));
-      const idempotencyKey = `${uid}:${cartShop.id}:${items
-        .map((l) => `${l.itemId}x${l.quantity}`)
-        .sort()
-        .join("|")}:${Math.floor(Date.now() / 60000)}`;
-
       setCheckoutStep("creating");
-      const session = await createCheckoutOrder({
+
+      // 1. Call Secure Supabase Edge Function to securely calculate prices & validate availability
+      const payload = {
         shopId: cartShop.id,
-        items,
-        idempotencyKey,
-        returnUrl: `${window.location.origin}/checkout`,
+        items: cartItems.map(l => ({ itemId: l.item.id, quantity: l.qty })),
+        customerName: profile.name,
+        customerEmail: profile.email
+      };
+
+      const { data: createResponse, error: createError } = await supabase.functions.invoke("create-cashfree-order", {
+        body: payload
       });
 
-      if (session.alreadyPaid && session.receiptId) {
-        setCart([]);
-        return { receiptId: session.receiptId };
+      if (createError || !createResponse) {
+        throw new Error("Unable to reach payment gateway. Please try again.");
       }
-      if (!session.paymentSessionId) throw new Error("Payment could not be started.");
+
+      if (!createResponse.success) {
+        throw new Error(createResponse.message || "Order creation failed.");
+      }
 
       setCheckoutStep("paying");
-      await openCashfreeCheckout(session.paymentSessionId, session.environment ?? "sandbox");
+      const { payment_session_id, order_id } = createResponse;
 
-      // Authoritative result. The webhook may confirm slightly later, so a
-      // pending answer is retried a few times before we call it unresolved.
-      setCheckoutStep("verifying");
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        const result = await verifyCashfreePayment(session.orderId);
-        if (result.status === "SUCCESS" && result.receiptId) {
-          setCart([]);
-          return { receiptId: result.receiptId };
-        }
-        if (result.status === "FAILED") {
-          toast.error("Payment failed. You have not been charged for this order.");
-          return null;
-        }
-        await new Promise((r) => setTimeout(r, 2000));
-      }
-      toast("Payment is still processing", {
-        description: "Your receipt will appear under Receipts as soon as it clears.",
+      // 2. Load Cashfree SDK dynamically to reduce initial bundle size
+      // @ts-ignore
+      const { load } = await import('@cashfreepayments/cashfree-js');
+      const cashfree = await load({ mode: "sandbox" });
+
+      // 3. Trigger Secure Overlay Checkout
+      return new Promise((resolve, reject) => {
+        cashfree.checkout({
+          paymentSessionId: payment_session_id,
+          returnUrl: `${window.location.origin}/checkout?cf_order_id=${order_id}&cf_verify=true`,
+        }).then(() => {
+          // It might not resolve here since returnUrl redirects
+        }).catch((err: any) => {
+          console.error(err);
+          reject(new Error("Checkout failed to initialize"));
+        });
       });
-      return null;
+
     } catch (err) {
-      toast.error(friendlyError(err, "We couldn't complete your order."));
+      const msg = err instanceof Error ? err.message : "We couldn't complete your order.";
+      toast.error(msg);
       return null;
     } finally {
       setCheckoutStep("idle");
@@ -335,9 +311,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [cartItems, cartShop, placing, profile, uid]);
 
-
   const confirmPickup = useCallback(async (receiptId: string) => {
-    await redeemReceipt(receiptId);
+    // Stub receipt redemption
+    await supabase.from("orders").update({ order_status: "COMPLETED" }).eq("receipt_id", receiptId);
   }, []);
 
   const logout = useCallback(async () => {
@@ -346,43 +322,44 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toast("Logged out");
   }, [authLogout]);
 
-  /** Receipts are joined with their order so status is always live. */
+  /** Receipts are mapped directly from paid orders */
   const receipts = useMemo<Receipt[]>(() => {
-    return receiptDocs.map((r) => {
-      const order = orders.find((o) => o.orderId === r.orderId);
-      const status: ReceiptStatus =
-        r.status === "REDEEMED"
-          ? "picked_up"
-          : order?.orderStatus === "READY"
-            ? "ready"
-            : "preparing";
-      return {
-        id: r.receiptId,
-        code: r.receiptNumber,
-        shopId: r.shopId,
-        shopName: r.shopName,
-        counter: r.counter,
-        lines: (order?.items ?? []).map((i) => ({
-          name: i.name,
-          qty: i.quantity,
-          price: i.price,
-        })),
-        total: order?.totalAmount ?? 0,
-        paid: order?.paymentStatus === "PAID",
-        status,
-        createdAt: tsToIso(r.createdAt),
-        pickedUpAt: r.redeemedAt ? tsToIso(r.redeemedAt) : null,
-      };
-    });
-  }, [receiptDocs, orders]);
+    return orders
+      .filter((o) => o.receiptId)
+      .map((order) => {
+        const status: ReceiptStatus =
+          (order.paymentStatus as any) === "REDEEMED" || order.orderStatus === "COMPLETED"
+            ? "picked_up"
+            : order.orderStatus === "READY"
+              ? "ready"
+              : "preparing";
+        return {
+          id: order.receiptId!,
+          code: order.orderNumber,
+          shopId: order.shopId,
+          shopName: order.shopName,
+          counter: `${order.shopName} Counter`,
+          lines: (order.items ?? []).map((i) => ({
+            name: i.name,
+            qty: i.quantity,
+            price: i.price,
+          })),
+          total: order.totalAmount ?? 0,
+          paid: order.paymentStatus === "PAID" || (order.paymentStatus as any) === "REDEEMED",
+          status,
+          createdAt: String(order.createdAt),
+          pickedUpAt: status === "picked_up" ? String(order.updatedAt) : null,
+        };
+      });
+  }, [orders]);
 
   const user: User = profile
     ? {
-        id: profile.uid,
-        name: profile.name?.split(" ")[0] ?? "there",
-        email: profile.email,
-        initials: (profile.name?.trim()?.charAt(0) ?? "S").toUpperCase(),
-      }
+      id: profile.uid,
+      name: profile.name?.split(" ")[0] ?? "there",
+      email: profile.email,
+      initials: (profile.name?.trim()?.charAt(0) ?? "S").toUpperCase(),
+    }
     : GUEST;
 
   const value: StoreValue = {

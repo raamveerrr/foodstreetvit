@@ -9,8 +9,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./auth-store";
-import { isBrowser } from "./firebase/client";
-import { friendlyError } from "./firebase/errors";
 import {
   createCategory,
   createMenuItem,
@@ -25,8 +23,8 @@ import {
   subscribeOwnerShops,
   updateMenuItem as updateMenuItemDoc,
   updateShopDoc,
-} from "./firebase/shops";
-import { setOrderStatus as setOrderStatusDoc, subscribeShopOrders } from "./firebase/orders";
+} from "./supabase-shops";
+import { setOrderStatus as setOrderStatusDoc, subscribeShopOrders } from "./supabase-orders";
 import type {
   CategoryDoc,
   MenuItemDoc,
@@ -179,7 +177,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
 
   // Shops owned by this account.
   useEffect(() => {
-    if (!isBrowser || !uid) {
+    if (!uid) {
       setShopDocs([]);
       setShopsLoaded(ready);
       return;
@@ -211,7 +209,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
 
   // Menu, categories and orders for the active shop only.
   useEffect(() => {
-    if (!isBrowser || !activeShopId) {
+    if (!activeShopId) {
       setMenu([]);
       setCategories([]);
       setOrders([]);
@@ -316,7 +314,10 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
     [shops, activeShopId],
   );
 
-  const fail = (err: unknown, fallback: string) => toast.error(friendlyError(err, fallback));
+  const fail = (err: unknown, fallback: string) => {
+    const msg = err instanceof Error ? err.message : fallback;
+    toast.error(msg);
+  };
 
   const createShop = useCallback<MerchantValue["createShop"]>(
     async (input) => {
@@ -377,9 +378,14 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
   const setAvailability = useCallback(
     (a: ShopAvailability) => {
       if (!activeShopId) return;
-      void setShopStatus(activeShopId, AVAILABILITY_TO_STATUS[a]).catch((e) =>
-        fail(e, "Unable to update your shop status."),
-      );
+
+      const newStatus = AVAILABILITY_TO_STATUS[a];
+      setShopDocs((prev) => prev.map((s) => (s.shopId === activeShopId ? { ...s, status: newStatus } : s)));
+
+      void setShopStatus(activeShopId, newStatus).catch((e) => {
+        fail(e, "Unable to update your shop status.");
+        // We do not eagerly revert because next realtime fetch would override, but if it fails, maybe fetch again.
+      });
     },
     [activeShopId],
   );
@@ -425,6 +431,9 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
         doc["categoryId"] = patch.categoryId ?? categoryIds[patch.category] ?? "";
       }
       if (Object.keys(doc).length === 0) return;
+
+      setMenu((prev) => prev.map((m) => (m.itemId === id ? { ...m, ...doc } : m) as MenuItemDoc));
+
       void updateMenuItemDoc(activeShopId, id, doc).catch((e) =>
         fail(e, "Unable to save this item."),
       );

@@ -19,6 +19,7 @@ import { AuthProvider } from "@/lib/auth-store";
 import { CatalogProvider } from "@/lib/catalog-store";
 import { MerchantProvider } from "@/lib/merchant-store";
 import { Toaster } from "@/components/ui/sonner";
+import { SplashScreen } from "@/components/app/SplashScreen";
 
 
 function NotFoundComponent() {
@@ -148,31 +149,30 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-      <CatalogProvider>
-      <StoreProvider>
-        <MerchantProvider>
-          <div className="min-h-screen bg-background">
-            {merchant ? (
-              <main className="min-h-screen bg-background">
-                <Outlet />
-              </main>
-            ) : (
-              <>
-                <main className="app-shell min-h-screen bg-background pb-[92px]">
-                  {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-                  <Outlet />
-                </main>
-                <BottomNavigation />
-              </>
-            )}
-          </div>
-          <Toaster position="top-center" richColors closeButton={false} />
-        </MerchantProvider>
-      </StoreProvider>
-      </CatalogProvider>
+        <CatalogProvider>
+          <StoreProvider>
+            <MerchantProvider>
+              <div className="min-h-screen bg-background">
+                {merchant ? (
+                  <main className="min-h-screen bg-background">
+                    <Outlet />
+                  </main>
+                ) : (
+                  <>
+                    <main className="app-shell min-h-screen bg-background pb-[92px]">
+                      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                      <Outlet />
+                    </main>
+                    <BottomNavigation />
+                  </>
+                )}
+              </div>
+              <Toaster position="top-center" richColors closeButton={false} />
+              <SplashScreen />
+            </MerchantProvider>
+          </StoreProvider>
+        </CatalogProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
-
-

@@ -2,8 +2,7 @@ import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-rout
 import { useEffect, useState } from "react";
 import { Button, Card } from "@/components/merchant/MerchantUI";
 import { useAuth } from "@/lib/auth-store";
-import { getDb } from "@/lib/firebase/client";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/shops")({
   head: () => ({ meta: [{ title: "Admin — Shops" }] }),
@@ -13,22 +12,37 @@ export const Route = createFileRoute("/admin/shops")({
 function AdminShopsPage() {
   const { profile, ready, firebaseUser } = useAuth();
   const [shops, setShops] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
   const debug = { timestamp: "hydration-safe" };
 
+  // Hooks MUST be called unconditionally
+  useEffect(() => {
+    if (!ready || !profile || profile.role !== "SUPER_ADMIN") {
+      setLoading(false);
+      return;
+    }
+    
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("shops").select("*").order("created_at", { ascending: false });
+        if (error) {
+          console.error("Failed to fetch shops:", error);
+        } else {
+          setShops(data ?? []);
+        }
+      } catch (err) {
+        console.error("Error fetching shops:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [profile, ready]);
+
+  // Handle nested route rendering
   if (location.pathname !== "/admin/shops") {
     return <Outlet />;
   }
-
-  useEffect(() => {
-    if (!ready || !profile || profile.role !== "SUPER_ADMIN") return;
-    (async () => {
-      const db = getDb();
-      const q = query(collection(db, "shops"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setShops(snap.docs.map((d) => d.data()));
-    })();
-  }, [profile, ready]);
 
   // TEST: Render simple static content to verify component is rendering
   return (
@@ -48,7 +62,7 @@ function AdminShopsPage() {
 
       {!ready && <p style={{ padding: '20px', color: '#666' }}>⏳ Loading authentication...</p>}
       {ready && !firebaseUser && <p style={{ padding: '20px', color: '#d32f2f' }}>❌ Not signed in</p>}
-      {ready && firebaseUser && !profile && <p style={{ padding: '20px', color: '#ff9800' }}>⏳ Loading profile from Firestore...</p>}
+      {ready && firebaseUser && !profile && <p style={{ padding: '20px', color: '#ff9800' }}>⏳ Loading profile...</p>}
       {ready && profile && profile.role !== "SUPER_ADMIN" && (
         <p style={{ padding: '20px', color: '#d32f2f' }}>❌ Access denied. Your role is: {profile.role}</p>
       )}
@@ -62,15 +76,16 @@ function AdminShopsPage() {
             </Link>
           </div>
           <div style={{ display: 'grid', gap: '12px' }}>
-            {shops.length === 0 && <p style={{ color: '#999' }}>No shops yet. Create your first shop.</p>}
+            {loading && <p style={{ color: '#999' }}>Loading shops...</p>}
+            {!loading && shops.length === 0 && <p style={{ color: '#999' }}>No shops yet. Create your first shop.</p>}
             {shops.map((s) => (
-              <Card key={s.shopId} className="p-4">
+              <Card key={s.id} className="p-4">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <p style={{ fontWeight: 'bold', margin: '0 0 5px 0' }}>{s.name}</p>
-                    <p style={{ fontSize: '14px', color: '#999', margin: 0 }}>Owner: {s.ownerId}</p>
+                    <p style={{ fontSize: '14px', color: '#999', margin: 0 }}>Owner UID: {s.owner_uid}</p>
                   </div>
-                  <div style={{ fontSize: '14px', color: '#999' }}>{new Date(s.createdAt?._seconds*1000).toLocaleString()}</div>
+                  <div style={{ fontSize: '14px', color: '#999' }}>{new Date(s.created_at).toLocaleString()}</div>
                 </div>
               </Card>
             ))}
