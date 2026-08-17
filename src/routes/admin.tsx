@@ -1,36 +1,39 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate, Outlet } from "@tanstack/react-router";
+import { useLayoutEffect } from "react";
 import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [{ title: "Admin — DigitalFoodStreet" }],
   }),
-  component: AdminDashboard,
+  component: AdminShell,
 });
 
-function AdminDashboard() {
+function AdminShell() {
   const navigate = useNavigate();
   const { profile, ready } = useAuth();
 
-  useEffect(() => {
-    if (!ready) return;
+  // Use useLayoutEffect to redirect synchronously before render
+  useLayoutEffect(() => {
+    if (!ready) return; // Wait for auth to be ready
     
     if (!profile) {
-      // Not authenticated, redirect to login
-      navigate({ to: "/login", replace: true });
+      void navigate({ to: "/login", replace: true });
       return;
     }
     
     if (profile.role !== "SUPER_ADMIN") {
-      // Not admin, redirect home
-      navigate({ to: "/", replace: true });
+      void navigate({ to: "/", replace: true });
       return;
     }
     
-    // Admin authenticated, redirect to shops management
-    navigate({ to: "/admin/shops", replace: true });
+    // SUPER_ADMIN should go to shops if not already on a child route
+    if (window.location.pathname === "/admin" || window.location.pathname === "/admin/") {
+      void navigate({ to: "/admin/shops", replace: true });
+    }
   }, [profile, ready, navigate]);
 
-  return null;
+  // Render the Outlet for child routes (like /admin/shops)
+  // If at /admin, the useEffect will redirect to /admin/shops
+  return <Outlet />;
 }

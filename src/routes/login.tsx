@@ -42,7 +42,13 @@ function LoginPage() {
     try {
       const profile = await signIn(email, password);
       toast.success("Signed in");
-      navigate({ to: profile?.role === "SHOP_OWNER" ? "/shop" : "/", replace: true });
+      if (profile?.role === "SUPER_ADMIN") {
+        navigate({ to: "/admin", replace: true });
+      } else if (profile?.role === "SHOP_OWNER") {
+        navigate({ to: "/shop", replace: true });
+      } else {
+        navigate({ to: "/", replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "We couldn't sign you in.");
     } finally {

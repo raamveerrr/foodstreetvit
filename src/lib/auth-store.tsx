@@ -7,27 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  browserLocalPersistence,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  setPersistence,
-  signInWithEmailAndPassword,
-  signOut,
-  updatePassword,
-  updateProfile,
-  type User as FirebaseUser,
-} from "firebase/auth";
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { getDb, getFirebaseAuth, isBrowser } from "./firebase/client";
-import { friendlyError } from "./firebase/errors";
+import { supabase } from "./supabase";
 import type { UserDoc, UserRole } from "./firebase/types";
 
 interface AuthValue {
-  /** false until Firebase has restored the persisted session. */
   ready: boolean;
-  firebaseUser: FirebaseUser | null;
+  firebaseUser: { uid: string; email?: string | null } | null;
   profile: UserDoc | null;
   role: UserRole | null;
   isStudent: boolean;
@@ -44,114 +29,110 @@ const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<{ uid: string; email?: string | null } | null>(null);
   const [profile, setProfile] = useState<UserDoc | null>(null);
 
-  // Session restore. Auth state drives one profile listener, nothing else.
   useEffect(() => {
-    if (!isBrowser) return;
-    const auth = getFirebaseAuth();
-    void setPersistence(auth, browserLocalPersistence).catch(() => undefined);
-    const stop = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-      if (!user) setProfile(null);
+    const loadSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user ?? null;
+      setFirebaseUser(user ? { uid: user.id, email: user.email } : null);
+      if (user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("uid", user.id)
+          .single();
+        
+        if (profileError && profileError.code !== "PGRST116") {
+          console.error("Profile fetch error:", profileError);
+        }
+        setProfile((profileData as UserDoc) ?? null);
+      } else {
+        setProfile(null);
+      }
+      setReady(true);
+    };
+
+    void loadSession();
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_, session) => {
+      const user = session?.user ?? null;
+      setFirebaseUser(user ? { uid: user.id, email: user.email } : null);
+      if (user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("uid", user.id)
+          .single();
+        
+        if (profileError && profileError.code !== "PGRST116") {
+          console.error("Profile fetch error:", profileError);
+        }
+        setProfile((profileData as UserDoc) ?? null);
+      } else {
+        setProfile(null);
+      }
       setReady(true);
     });
-    return stop;
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Realtime profile (role changes take effect without a reload).
-  useEffect(() => {
-    if (!isBrowser || !firebaseUser) return;
-    const ref = doc(getDb(), "users", firebaseUser.uid);
-    const stop = onSnapshot(
-      ref,
-      (snap) => setProfile(snap.exists() ? (snap.data() as UserDoc) : null),
-      (err) => {
-        // Log error but don't crash - Firestore might still be initializing
-        console.debug("Profile snapshot error:", err);
-        setProfile(null);
-      },
-    );
-    return stop;
-  }, [firebaseUser]);
-
   const signUp = useCallback<AuthValue["signUp"]>(async ({ name, email, password, phone }) => {
-    const auth = getFirebaseAuth();
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(cred.user, { displayName: name.trim() });
-      // The role is written once, at creation. Security rules make it immutable
-      // from the client afterwards, so nobody can promote themselves.
-      // Public signup always creates STUDENT accounts.
-      await setDoc(doc(getDb(), "users", cred.user.uid), {
-        uid: cred.user.uid,
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone?.trim() ?? "",
-        role: "STUDENT",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      throw new Error(friendlyError(err, "We couldn't create your account."));
-    }
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw new Error(error.message);
+
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) throw new Error("Account created but user record is unavailable.");
+
+    const { error: insertError } = await supabase.from("users").insert({
+      uid,
+      name,
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() ?? "",
+      role: "STUDENT",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (insertError) throw new Error(insertError.message);
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      const cred = await signInWithEmailAndPassword(getFirebaseAuth(), email.trim(), password);
-      const snap = await getDoc(doc(getDb(), "users", cred.user.uid));
-      return snap.exists() ? (snap.data() as UserDoc) : null;
-    } catch (err) {
-      throw new Error(friendlyError(err, "We couldn't sign you in."));
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+
+    const uid = data.user.id;
+    const { data: row, error: rowError } = await supabase.from("users").select("*").eq("uid", uid).single();
+    if (rowError && rowError.code !== "PGRST116") throw new Error(rowError.message);
+    return (row as UserDoc) ?? null;
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
-    try {
-      await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
-    } catch (err) {
-      throw new Error(friendlyError(err, "We couldn't send the reset email."));
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+    if (error) throw new Error(error.message);
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await signOut(getFirebaseAuth());
-    } catch (err) {
-      throw new Error(friendlyError(err, "We couldn't sign you out."));
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
   }, []);
 
   const changePassword = useCallback(async (newPassword: string) => {
     if (!firebaseUser) throw new Error("Please sign in and try again.");
-    try {
-      await updatePassword(firebaseUser, newPassword);
-      // Update mustChangePassword flag in Firestore
-      await updateDoc(doc(getDb(), "users", firebaseUser.uid), {
-        mustChangePassword: false,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (err) {
-      throw new Error(friendlyError(err, "Unable to change your password."));
-    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+
+    const { error: updateError } = await supabase.from("users").update({ must_change_password: false, updated_at: new Date().toISOString() }).eq("uid", firebaseUser.uid);
+    if (updateError) throw new Error(updateError.message);
   }, [firebaseUser]);
 
-  const updateOwnProfile = useCallback<AuthValue["updateOwnProfile"]>(
-    async (patch) => {
-      if (!firebaseUser) throw new Error("Please sign in and try again.");
-      try {
-        await updateDoc(doc(getDb(), "users", firebaseUser.uid), {
-          ...patch,
-          updatedAt: serverTimestamp(),
-        });
-      } catch (err) {
-        throw new Error(friendlyError(err, "Unable to save your changes."));
-      }
-    },
-    [firebaseUser],
-  );
+  const updateOwnProfile = useCallback<AuthValue["updateOwnProfile"]>(async (patch) => {
+    if (!firebaseUser) throw new Error("Please sign in and try again.");
+    const { error } = await supabase.from("users").update({ ...patch, updated_at: new Date().toISOString() }).eq("uid", firebaseUser.uid);
+    if (error) throw new Error(error.message);
+  }, [firebaseUser]);
 
   const value = useMemo<AuthValue>(
     () => ({

@@ -27,16 +27,12 @@ export const getFirebaseApp = (): FirebaseApp => {
 };
 
 export const getDb = (): Firestore => {
-  try {
-    const app = getFirebaseApp();
-    return getFirestore(app);
-  } catch (err) {
-    console.error("Failed to get Firestore instance:", err);
-    return getFirestore(getFirebaseApp());
-  }
+  const app = getFirebaseApp();
+  const db = getFirestore(app, "default");
+  return db;
 };
 export const getFirebaseAuth = (): Auth => getAuth(getFirebaseApp());
-export const getFns = (): Functions => getFunctions(getFirebaseApp());
+export const getFns = (): Functions => getFunctions(getFirebaseApp(), "us-central1");
 
 /** Firestore/Auth listeners must only ever be created in the browser. */
 export const isBrowser = typeof window !== "undefined";

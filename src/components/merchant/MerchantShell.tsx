@@ -30,12 +30,19 @@ export const MERCHANT_NAV = [
 const MERCHANT_PATHS = new Set<string>([
   "/shop-login",
   "/create-shop",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/admin",
   ...MERCHANT_NAV.map((n) => n.to),
 ]);
 
 /** Student `/shop/$shopId` pages must never be treated as merchant routes. */
-export const isMerchantPath = (pathname: string) =>
-  MERCHANT_PATHS.has(pathname.replace(/\/$/, "") || "/");
+export const isMerchantPath = (pathname: string) => {
+  const cleanPath = pathname.replace(/\/$/, "") || "/";
+  // Check if path is in MERCHANT_PATHS OR starts with /shop/ or /admin/
+  return MERCHANT_PATHS.has(cleanPath) || cleanPath.startsWith("/shop/") || cleanPath.startsWith("/admin/");
+};
 
 const AVAILABILITY = {
   open: { label: "Open", dot: "bg-success", chip: "bg-success-soft text-success" },

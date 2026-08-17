@@ -3,10 +3,9 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { Button, Field, Select, TextArea, TextInput } from "@/components/merchant/MerchantUI";
-import { getFns } from "@/lib/firebase/client";
-import { httpsCallable } from "firebase/functions";
 import { useAuth } from "@/lib/auth-store";
 import { SHOP_CATEGORIES, TIME_OPTIONS, defaultHours } from "@/lib/merchant-data";
+import { createShopOwnerAndShop } from "@/lib/supabase";
 import { Check } from "lucide-react";
 
 export const Route = createFileRoute("/admin/shops/create")({
@@ -25,7 +24,7 @@ interface SuccessData {
 
 function AdminCreateShopPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, ready } = useAuth();
   const [busy, setBusy] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -42,6 +41,10 @@ function AdminCreateShopPage() {
   const [hours] = useState(defaultHours());
 
   const [success, setSuccess] = useState<SuccessData | null>(null);
+
+  if (!ready) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   if (!profile) {
     // Not signed in yet.
@@ -149,8 +152,7 @@ function AdminCreateShopPage() {
     }
     setBusy(true);
     try {
-      const fn = httpsCallable(getFns(), "createShopOwnerAndShop");
-      await fn({
+      const result = await createShopOwnerAndShop({
         ownerName,
         ownerEmail,
         ownerPhone,
@@ -167,13 +169,12 @@ function AdminCreateShopPage() {
           status: "CLOSED",
         },
       });
-      
-      // Show success screen with credentials
+
       setSuccess({
-        shopName: name,
-        ownerName,
-        ownerEmail,
-        temporaryPassword,
+        shopName: result.shopName ?? name,
+        ownerName: result.ownerName ?? ownerName,
+        ownerEmail: result.ownerEmail ?? ownerEmail,
+        temporaryPassword: result.temporaryPassword ?? temporaryPassword,
       });
     } catch (err: any) {
       toast.error(err?.message || "Failed to create shop and owner.");
