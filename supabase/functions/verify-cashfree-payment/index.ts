@@ -156,6 +156,27 @@ Deno.serve(async (req: Request) => {
                 throw new Error("Failed to construct receipt securely.");
             }
 
+            // === Phase 6: Queue print job ===
+            // ON CONFLICT idempotency: if webhook fires twice, only one print job is created.
+            // Find the shop's primary printer (first ONLINE, else any)
+            const { data: shopPrinter } = await supabase
+                .from("printers")
+                .select("id")
+                .eq("shop_id", paymentRecord.shop_id)
+                .order("last_seen_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            await supabase.from("print_jobs").upsert({
+                order_id: orderRecord.id,
+                receipt_id: finalReceiptId,
+                shop_id: paymentRecord.shop_id,
+                printer_id: shopPrinter?.id ?? null,
+                status: "QUEUED",
+                attempt_count: 0
+            }, { onConflict: "order_id", ignoreDuplicates: true });
+            // === End Phase 6 ===
+
             await supabase.from("payments").update({ payment_status: "PAID" }).eq("id", paymentRecord.id);
 
             await supabase.from("orders").update({

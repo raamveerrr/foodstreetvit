@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Printer,
   ReceiptText,
   ScanLine,
   Settings,
@@ -25,6 +26,7 @@ export const MERCHANT_NAV = [
   { to: "/shop/customers", label: "Customers", icon: UsersRound },
   { to: "/shop/settings", label: "Settings", icon: Settings },
   { to: "/shop/payments", label: "Payments", icon: CreditCard },
+  { to: "/shop/printer", label: "Printer", icon: Printer },
 ] as const;
 
 const MERCHANT_PATHS = new Set<string>([

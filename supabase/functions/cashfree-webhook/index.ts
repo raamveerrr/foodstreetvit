@@ -148,6 +148,25 @@ Deno.serve(async (req: Request) => {
                         order_status: "PAID",
                         receipt_id: newReceipt.id
                     }).eq("id", orderRecord.id);
+
+                    // === Phase 6: Queue print job (idempotent) ===
+                    const { data: shopPrinter } = await supabase
+                        .from("printers")
+                        .select("id")
+                        .eq("shop_id", paymentRecord.shop_id)
+                        .order("last_seen_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    await supabase.from("print_jobs").upsert({
+                        order_id: orderRecord.id,
+                        receipt_id: newReceipt.id,
+                        shop_id: paymentRecord.shop_id,
+                        printer_id: shopPrinter?.id ?? null,
+                        status: "QUEUED",
+                        attempt_count: 0
+                    }, { onConflict: "order_id", ignoreDuplicates: true });
+                    // === End Phase 6 ===
                 }
             }
         } else if (eventType === "PAYMENT_FAILED_WEBHOOK") {

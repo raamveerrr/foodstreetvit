@@ -32,6 +32,7 @@ import { Route as ShopCustomersRouteImport } from './routes/shop.customers'
 import { Route as ShopMenuRouteImport } from './routes/shop.menu'
 import { Route as ShopOrdersRouteImport } from './routes/shop.orders'
 import { Route as ShopPaymentsRouteImport } from './routes/shop.payments'
+import { Route as ShopPrinterRouteImport } from './routes/shop.printer'
 import { Route as ShopReceiptsRouteImport } from './routes/shop.receipts'
 import { Route as ShopSettingsRouteImport } from './routes/shop.settings'
 import { Route as AdminShopsCreateRouteImport } from './routes/admin/shops.create'
@@ -151,6 +152,11 @@ const ShopPaymentsRoute = ShopPaymentsRouteImport.update({
   path: '/shop/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopPrinterRoute = ShopPrinterRouteImport.update({
+  id: '/shop/printer',
+  path: '/shop/printer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopReceiptsRoute = ShopReceiptsRouteImport.update({
   id: '/shop/receipts',
   path: '/shop/receipts',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/printer': typeof ShopPrinterRoute
   '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/printer': typeof ShopPrinterRoute
   '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts': typeof ReceiptsIndexRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/shop/menu': typeof ShopMenuRoute
   '/shop/orders': typeof ShopOrdersRoute
   '/shop/payments': typeof ShopPaymentsRoute
+  '/shop/printer': typeof ShopPrinterRoute
   '/shop/receipts': typeof ShopReceiptsRoute
   '/shop/settings': typeof ShopSettingsRoute
   '/receipts/': typeof ReceiptsIndexRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/printer'
     | '/shop/receipts'
     | '/shop/settings'
     | '/receipts/'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/printer'
     | '/shop/receipts'
     | '/shop/settings'
     | '/receipts'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/shop/menu'
     | '/shop/orders'
     | '/shop/payments'
+    | '/shop/printer'
     | '/shop/receipts'
     | '/shop/settings'
     | '/receipts/'
@@ -360,6 +372,7 @@ export interface RootRouteChildren {
   ShopMenuRoute: typeof ShopMenuRoute
   ShopOrdersRoute: typeof ShopOrdersRoute
   ShopPaymentsRoute: typeof ShopPaymentsRoute
+  ShopPrinterRoute: typeof ShopPrinterRoute
   ShopReceiptsRoute: typeof ShopReceiptsRoute
   ShopSettingsRoute: typeof ShopSettingsRoute
   ReceiptsIndexRoute: typeof ReceiptsIndexRoute
@@ -529,6 +542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/printer': {
+      id: '/shop/printer'
+      path: '/shop/printer'
+      fullPath: '/shop/printer'
+      preLoaderRoute: typeof ShopPrinterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop/receipts': {
       id: '/shop/receipts'
       path: '/shop/receipts'
@@ -596,6 +616,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopMenuRoute: ShopMenuRoute,
   ShopOrdersRoute: ShopOrdersRoute,
   ShopPaymentsRoute: ShopPaymentsRoute,
+  ShopPrinterRoute: ShopPrinterRoute,
   ShopReceiptsRoute: ShopReceiptsRoute,
   ShopSettingsRoute: ShopSettingsRoute,
   ReceiptsIndexRoute: ReceiptsIndexRoute,

@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Printer } from "lucide-react";
 import { MerchantShell } from "@/components/merchant/MerchantShell";
 import {
   Button,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/merchant-data";
 import { useAuth } from "@/lib/auth-store";
 import { useMerchant } from "@/lib/merchant-store";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/shop/")({
@@ -47,6 +49,72 @@ const AVAILABILITY_OPTIONS: { value: ShopAvailability; label: string }[] = [
   { value: "unavailable", label: "Temporarily unavailable" },
 ];
 
+// ── Printer Status Widget ─────────────────────────────────────────────────
+function PrinterStatusWidget({ shopId }: { shopId: string }) {
+  const [printer, setPrinter] = useState<{ status: string; name: string; queue: number } | null>(null);
+
+  useEffect(() => {
+    if (!shopId) return;
+    // Fetch printer status
+    supabase
+      .from("printers")
+      .select("name, status")
+      .eq("shop_id", shopId)
+      .order("last_seen_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        // Also count queued jobs
+        supabase
+          .from("print_jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+          .in("status", ["QUEUED", "PRINTING"])
+          .then(({ count }) => {
+            setPrinter({ status: data.status, name: data.name, queue: count ?? 0 });
+          });
+      });
+  }, [shopId]);
+
+  if (!printer) return null;
+
+  const isOnline = printer.status === "ONLINE" || printer.status === "PRINTING";
+
+  return (
+    <Link to="/shop/printer">
+      <Card className="flex items-center justify-between gap-3 hover:bg-secondary/60 transition-colors cursor-pointer">
+        <div className="flex items-center gap-2.5">
+          <span className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full",
+            isOnline ? "bg-success-soft" : "bg-secondary"
+          )}>
+            <Printer size={15} className={isOnline ? "text-success" : "text-muted-foreground"} />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">{printer.name}</p>
+            <p className="text-xs text-muted-foreground">Thermal Printer</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {printer.queue > 0 && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+              {printer.queue} queued
+            </span>
+          )}
+          <span className={cn(
+            "rounded-full px-2.5 py-1 text-[11px] font-bold uppercase",
+            isOnline ? "bg-success-soft text-success" : "bg-secondary text-muted-foreground"
+          )}>
+            {isOnline ? "Online" : "Offline"}
+          </span>
+        </div>
+      </Card>
+    </Link>
+  );
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────────────
 function ShopDashboard() {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -128,6 +196,8 @@ function ShopDashboard() {
             <StatCard label="Completed" value={String(completed.length)} index={2} />
             <StatCard label="Revenue" value={formatMoney(revenue)} index={3} />
           </div>
+
+          <PrinterStatusWidget shopId={shop.id} />
 
           <section>
             <SectionHeading
