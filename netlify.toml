@@ -5,5 +5,5 @@
 
 
 [build.environment]
-  NITRO_PRESET = "netlify-edge"
+  NITRO_PRESET = "static"
 
