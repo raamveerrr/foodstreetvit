@@ -22,7 +22,7 @@ function AdminShopsPage() {
       setLoading(false);
       return;
     }
-    
+
     (async () => {
       try {
         const { data, error } = await supabase.from("shops").select("*").order("created_at", { ascending: false });
@@ -38,6 +38,20 @@ function AdminShopsPage() {
       }
     })();
   }, [profile, ready]);
+
+  async function handleDeleteShop(shopId: string, shopName: string) {
+    if (!confirm(`Are you sure you want to permanently delete "${shopName}" and all of its associated data?`)) return;
+
+    try {
+      const { error } = await supabase.from("shops").delete().eq("id", shopId);
+      if (error) throw error;
+      setShops(shops.filter((s) => s.id !== shopId));
+      alert("Shop deleted successfully.");
+    } catch (error: any) {
+      console.error("Failed to delete shop:", error);
+      alert(`Failed to delete shop: ${error.message}`);
+    }
+  }
 
   // Handle nested route rendering
   if (location.pathname !== "/admin/shops") {
@@ -85,7 +99,16 @@ function AdminShopsPage() {
                     <p style={{ fontWeight: 'bold', margin: '0 0 5px 0' }}>{s.name}</p>
                     <p style={{ fontSize: '14px', color: '#999', margin: 0 }}>Owner UID: {s.owner_uid}</p>
                   </div>
-                  <div style={{ fontSize: '14px', color: '#999' }}>{new Date(s.created_at).toLocaleString()}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <div style={{ fontSize: '14px', color: '#999' }}>{new Date(s.created_at).toLocaleString()}</div>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleDeleteShop(s.id, s.name)}
+                      className="h-8 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground px-3 text-xs"
+                    >
+                      Delete Shop
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

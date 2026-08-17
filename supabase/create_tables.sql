@@ -129,3 +129,7 @@ END $$;
 
 -- Done! Now enable Realtime for these tables in the Supabase Dashboard:
 -- Go to Database → Replication → enable for: shops, menu_items, categories, orders
+
+-- Allow SUPER_ADMIN to delete shops
+CREATE POLICY "Super Admins can delete shops" ON public.shops FOR DELETE USING (public.is_admin(auth.uid()));
+
