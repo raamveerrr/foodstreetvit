@@ -7,7 +7,7 @@ export function BackBar({ title, fallback = "/" }: { title?: string | undefined;
     <div className="flex items-center gap-3 px-5 pt-6">
       <button
         onClick={() => {
-          if (window.history.length > 2) {
+          if (typeof window !== 'undefined' && window.history && window.history.length > 2) {
             router.history.back();
           } else {
             router.navigate({ to: fallback, replace: true });
