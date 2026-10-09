@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = "https://gnkuiljuevvexulwyion.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdua3VpbGp1ZXZ2ZXh1bHd5aW9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTI0NzUsImV4cCI6MjEwMjQ2ODQ3NX0.DHHcl-7EhpL7ZylhO64p0bf84sTrh7IVAVhKW7gEsF0";
+const supabaseUrl = "https://tohookmfpbbpuseuxczz.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvaG9va21mcGJicHVzZXV4Y3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDIyODQsImV4cCI6MjEwNzExODI4NH0.b41I8sGgfGT7F-Gb2wNtFk0MZY25W7fdWilkQ2RU2pg";
 
 export interface CreateShopOwnerPayload {
   ownerName: string;
