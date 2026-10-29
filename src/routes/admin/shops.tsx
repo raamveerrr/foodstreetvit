@@ -14,7 +14,6 @@ function AdminShopsPage() {
   const [shops, setShops] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const debug = { timestamp: "hydration-safe" };
 
   // Hooks MUST be called unconditionally
   useEffect(() => {
@@ -58,22 +57,8 @@ function AdminShopsPage() {
     return <Outlet />;
   }
 
-  // TEST: Render simple static content to verify component is rendering
   return (
     <div className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6 sm:px-6">
-      <div style={{ padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', marginBottom: '20px' }}>
-        <h2 style={{ marginBottom: '10px', fontWeight: 'bold', color: '#333' }}>DEBUG INFO</h2>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Timestamp: {debug.timestamp}</p>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Ready: {String(ready)}</p>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Has FirebaseUser: {Boolean(firebaseUser)}</p>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Has Profile: {Boolean(profile)}</p>
-        <p style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>Role: {profile?.role || 'undefined'}</p>
-        <details style={{ marginTop: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '4px' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>Full Profile JSON</summary>
-          <pre style={{ marginTop: '10px', fontSize: '12px', overflow: 'auto' }}>{JSON.stringify(profile, null, 2)}</pre>
-        </details>
-      </div>
-
       {!ready && <p style={{ padding: '20px', color: '#666' }}>⏳ Loading authentication...</p>}
       {ready && !firebaseUser && <p style={{ padding: '20px', color: '#d32f2f' }}>❌ Not signed in</p>}
       {ready && firebaseUser && !profile && <p style={{ padding: '20px', color: '#ff9800' }}>⏳ Loading profile...</p>}
