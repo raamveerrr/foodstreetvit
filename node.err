@@ -1,0 +1,40 @@
+TypeError: createLucideIcon is not a function
+    at file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/router-CuOiT06B.mjs:2418:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+    at async Promise.all (index 0)
+    at async loadEntries (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19358:52)
+    at async startRequestResolver (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19530:20)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19743:10)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/ssr.mjs:120:49) (status 500)
+caused by: TypeError: createLucideIcon is not a function
+    at file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/router-CuOiT06B.mjs:2418:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+    at async Promise.all (index 0)
+    at async loadEntries (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19358:52)
+    at async startRequestResolver (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19530:20)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19743:10)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/ssr.mjs:120:49)
+TypeError: createLucideIcon is not a function
+    at file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/router-CuOiT06B.mjs:2418:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+    at async Promise.all (index 0)
+    at async loadEntries (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19358:52)
+    at async startRequestResolver (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19530:20)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19743:10)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/ssr.mjs:120:49) (status 500)
+caused by: TypeError: createLucideIcon is not a function
+    at file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/router-CuOiT06B.mjs:2418:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+    at async Promise.all (index 0)
+    at async loadEntries (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19358:52)
+    at async startRequestResolver (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19530:20)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/server-DY9imPLq.mjs:19743:10)
+    at async Object.fetch (file:///C:/Users/veerr/OneDrive/Desktop/digitalfoodstreet/foodstreetvit/.output/server/_ssr/ssr.mjs:120:49)
