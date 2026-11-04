@@ -1572,3 +1572,8 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Project status
+
+- Backend: Supabase project `tohookmfpbbpuseuxczz` (ap-south-1)
+- Payments: Cashfree sandbox
